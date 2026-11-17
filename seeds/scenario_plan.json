@@ -1,0 +1,740 @@
+[
+  {
+    "case_id": "S01",
+    "case": "transfer_batch",
+    "channel": "transfer",
+    "invoices": [
+      {
+        "id": 166,
+        "name": "INV/2026/00099",
+        "partner_id": 14,
+        "partner_name": "Great Lakes Adventure Gear",
+        "opportunity_id": "006gK00000SXkyEQAT",
+        "residual_cents": 433104
+      },
+      {
+        "id": 162,
+        "name": "INV/2026/00095",
+        "partner_id": 14,
+        "partner_name": "Great Lakes Adventure Gear",
+        "opportunity_id": "006gK00000SY3D3QAL",
+        "residual_cents": 171028
+      },
+      {
+        "id": 141,
+        "name": "INV/2026/00076",
+        "partner_id": 14,
+        "partner_name": "Great Lakes Adventure Gear",
+        "opportunity_id": "006gK00000SXRpJQAX",
+        "residual_cents": 912000
+      }
+    ],
+    "pay_cents": 1516132,
+    "memo": "Great Lakes Adventure Gear payment INV/2026/00099 INV/2026/00095 INV/2026/00076",
+    "extra": {}
+  },
+  {
+    "case_id": "S02",
+    "case": "transfer_typo",
+    "channel": "transfer",
+    "invoices": [
+      {
+        "id": 151,
+        "name": "INV/2026/00085",
+        "partner_id": 15,
+        "partner_name": "Green Mountain Gear Exchange",
+        "opportunity_id": "006gK00000SY31lQAD",
+        "residual_cents": 548340
+      }
+    ],
+    "pay_cents": 548340,
+    "memo": "INV20260008",
+    "extra": {}
+  },
+  {
+    "case_id": "S03",
+    "case": "transfer_typo",
+    "channel": "transfer",
+    "invoices": [
+      {
+        "id": 147,
+        "name": "INV/2026/00082",
+        "partner_id": 10,
+        "partner_name": "Cascade Paddle Co.",
+        "opportunity_id": "006gK00000SY39pQAD",
+        "residual_cents": 579225
+      }
+    ],
+    "pay_cents": 579225,
+    "memo": "INV 2026 82",
+    "extra": {}
+  },
+  {
+    "case_id": "S04",
+    "case": "transfer_no_ref",
+    "channel": "transfer",
+    "invoices": [
+      {
+        "id": 169,
+        "name": "INV/2026/00102",
+        "partner_id": 13,
+        "partner_name": "Desert Sky Expeditions",
+        "opportunity_id": "006gK00000SY3EfQAL",
+        "residual_cents": 887915
+      }
+    ],
+    "pay_cents": 887915,
+    "memo": "DESERT SKY EXPEDITIONS",
+    "extra": {}
+  },
+  {
+    "case_id": "S05",
+    "case": "transfer_short_fee",
+    "channel": "transfer",
+    "invoices": [
+      {
+        "id": 148,
+        "name": "INV/2026/00083",
+        "partner_id": 11,
+        "partner_name": "Twin Cities Trailhead",
+        "opportunity_id": "006gK00000SXsHfQAL",
+        "residual_cents": 487248
+      }
+    ],
+    "pay_cents": 487173,
+    "memo": "INV/2026/00083",
+    "extra": {}
+  },
+  {
+    "case_id": "S06",
+    "case": "transfer_short_big",
+    "channel": "transfer",
+    "invoices": [
+      {
+        "id": 137,
+        "name": "INV/2026/00072",
+        "partner_id": 8,
+        "partner_name": "Blue Ridge Outfitters",
+        "opportunity_id": "006gK00000SXRnhQAH",
+        "residual_cents": 776200
+      }
+    ],
+    "pay_cents": 773700,
+    "memo": "INV/2026/00072",
+    "extra": {}
+  },
+  {
+    "case_id": "S07",
+    "case": "transfer_overpay",
+    "channel": "transfer",
+    "invoices": [
+      {
+        "id": 125,
+        "name": "INV/2026/00062",
+        "partner_id": 16,
+        "partner_name": "Lone Star Basecamp",
+        "opportunity_id": "006gK00000SXsCnQAL",
+        "residual_cents": 85320
+      }
+    ],
+    "pay_cents": 90320,
+    "memo": "INV/2026/00062",
+    "extra": {}
+  },
+  {
+    "case_id": "S08",
+    "case": "transfer_exact",
+    "channel": "transfer",
+    "invoices": [
+      {
+        "id": 126,
+        "name": "INV/2026/00063",
+        "partner_id": 12,
+        "partner_name": "Pacific Crest Provisions",
+        "opportunity_id": "006gK00000SXsMTQA1",
+        "residual_cents": 52245
+      }
+    ],
+    "pay_cents": 52245,
+    "memo": "INV/2026/00063",
+    "extra": {}
+  },
+  {
+    "case_id": "S09",
+    "case": "transfer_exact",
+    "channel": "transfer",
+    "invoices": [
+      {
+        "id": 118,
+        "name": "INV/2026/00057",
+        "partner_id": 13,
+        "partner_name": "Desert Sky Expeditions",
+        "opportunity_id": "006gK00000SXrgXQAT",
+        "residual_cents": 682465
+      }
+    ],
+    "pay_cents": 682465,
+    "memo": "INV/2026/00057",
+    "extra": {}
+  },
+  {
+    "case_id": "S10",
+    "case": "transfer_exact",
+    "channel": "transfer",
+    "invoices": [
+      {
+        "id": 168,
+        "name": "INV/2026/00101",
+        "partner_id": 13,
+        "partner_name": "Desert Sky Expeditions",
+        "opportunity_id": "006gK00000SXwFkQAL",
+        "residual_cents": 270300
+      }
+    ],
+    "pay_cents": 270300,
+    "memo": "INV/2026/00101",
+    "extra": {}
+  },
+  {
+    "case_id": "S11",
+    "case": "transfer_exact",
+    "channel": "transfer",
+    "invoices": [
+      {
+        "id": 146,
+        "name": "INV/2026/00081",
+        "partner_id": 18,
+        "partner_name": "Chesapeake Kayak Outfitters",
+        "opportunity_id": "006gK00000SY2qTQAT",
+        "residual_cents": 459632
+      }
+    ],
+    "pay_cents": 459632,
+    "memo": "INV/2026/00081",
+    "extra": {}
+  },
+  {
+    "case_id": "S12",
+    "case": "open",
+    "channel": "open",
+    "invoices": [
+      {
+        "id": 157,
+        "name": "INV/2026/00090",
+        "partner_id": 14,
+        "partner_name": "Great Lakes Adventure Gear",
+        "opportunity_id": "006gK00000SXpRqQAL",
+        "residual_cents": 380120
+      }
+    ],
+    "pay_cents": 0,
+    "memo": null,
+    "extra": {}
+  },
+  {
+    "case_id": "S13",
+    "case": "open",
+    "channel": "open",
+    "invoices": [
+      {
+        "id": 142,
+        "name": "INV/2026/00077",
+        "partner_id": 9,
+        "partner_name": "Rocky Mountain Trail Supply",
+        "opportunity_id": "006gK00000SY38DQAT",
+        "residual_cents": 156420
+      }
+    ],
+    "pay_cents": 0,
+    "memo": null,
+    "extra": {}
+  },
+  {
+    "case_id": "S14",
+    "case": "open",
+    "channel": "open",
+    "invoices": [
+      {
+        "id": 140,
+        "name": "INV/2026/00075",
+        "partner_id": 8,
+        "partner_name": "Blue Ridge Outfitters",
+        "opportunity_id": "006gK00000SXrNBQA1",
+        "residual_cents": 179860
+      }
+    ],
+    "pay_cents": 0,
+    "memo": null,
+    "extra": {}
+  },
+  {
+    "case_id": "S15",
+    "case": "open",
+    "channel": "open",
+    "invoices": [
+      {
+        "id": 135,
+        "name": "INV/2026/00070",
+        "partner_id": 14,
+        "partner_name": "Great Lakes Adventure Gear",
+        "opportunity_id": "006gK00000SXrWrQAL",
+        "residual_cents": 1046005
+      }
+    ],
+    "pay_cents": 0,
+    "memo": null,
+    "extra": {}
+  },
+  {
+    "case_id": "S16",
+    "case": "card_no_metadata",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 132,
+        "name": "INV/2026/00067",
+        "partner_id": 9,
+        "partner_name": "Rocky Mountain Trail Supply",
+        "opportunity_id": "006gK00000SXRirQAH",
+        "residual_cents": 895500
+      }
+    ],
+    "pay_cents": 895500,
+    "memo": "Order payment INV20260006",
+    "extra": {}
+  },
+  {
+    "case_id": "S17",
+    "case": "card_no_metadata",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 136,
+        "name": "INV/2026/00071",
+        "partner_id": 10,
+        "partner_name": "Cascade Paddle Co.",
+        "opportunity_id": "006gK00000SXRm5QAH",
+        "residual_cents": 910800
+      }
+    ],
+    "pay_cents": 910800,
+    "memo": "Order payment INV20260007",
+    "extra": {}
+  },
+  {
+    "case_id": "S18",
+    "case": "card_partial",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 165,
+        "name": "INV/2026/00098",
+        "partner_id": 8,
+        "partner_name": "Blue Ridge Outfitters",
+        "opportunity_id": "006gK00000SY2gnQAD",
+        "residual_cents": 151470
+      }
+    ],
+    "pay_cents": 75735,
+    "memo": "INV/2026/00098",
+    "extra": {}
+  },
+  {
+    "case_id": "S19",
+    "case": "card_refunded",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 134,
+        "name": "INV/2026/00069",
+        "partner_id": 14,
+        "partner_name": "Great Lakes Adventure Gear",
+        "opportunity_id": "006gK00000SXrVFQA1",
+        "residual_cents": 712908
+      }
+    ],
+    "pay_cents": 712908,
+    "memo": "INV/2026/00069",
+    "extra": {}
+  },
+  {
+    "case_id": "S20",
+    "case": "card_partial_refund",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 161,
+        "name": "INV/2026/00094",
+        "partner_id": 17,
+        "partner_name": "Sierra Summit Sports",
+        "opportunity_id": "006gK00000SY36bQAD",
+        "residual_cents": 353188
+      }
+    ],
+    "pay_cents": 353188,
+    "memo": "INV/2026/00094",
+    "extra": {
+      "refund_cents": 35318
+    }
+  },
+  {
+    "case_id": "S21",
+    "case": "card_disputed",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 145,
+        "name": "INV/2026/00080",
+        "partner_id": 18,
+        "partner_name": "Chesapeake Kayak Outfitters",
+        "opportunity_id": "006gK00000SXywYQAT",
+        "residual_cents": 335070
+      }
+    ],
+    "pay_cents": 335070,
+    "memo": "INV/2026/00080",
+    "extra": {}
+  },
+  {
+    "case_id": "S22",
+    "case": "card_duplicate",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 158,
+        "name": "INV/2026/00091",
+        "partner_id": 13,
+        "partner_name": "Desert Sky Expeditions",
+        "opportunity_id": "006gK00000SY2yXQAT",
+        "residual_cents": 167970
+      }
+    ],
+    "pay_cents": 167970,
+    "memo": "INV/2026/00091",
+    "extra": {}
+  },
+  {
+    "case_id": "S23",
+    "case": "card_exact",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 164,
+        "name": "INV/2026/00097",
+        "partner_id": 10,
+        "partner_name": "Cascade Paddle Co.",
+        "opportunity_id": "006gK00000SY2vJQAT",
+        "residual_cents": 276104
+      }
+    ],
+    "pay_cents": 276104,
+    "memo": "INV/2026/00097",
+    "extra": {}
+  },
+  {
+    "case_id": "S24",
+    "case": "card_exact",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 153,
+        "name": "INV/2026/00087",
+        "partner_id": 16,
+        "partner_name": "Lone Star Basecamp",
+        "opportunity_id": "006gK00000SY2ldQAD",
+        "residual_cents": 151506
+      }
+    ],
+    "pay_cents": 151506,
+    "memo": "INV/2026/00087",
+    "extra": {}
+  },
+  {
+    "case_id": "S25",
+    "case": "card_exact",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 133,
+        "name": "INV/2026/00068",
+        "partner_id": 18,
+        "partner_name": "Chesapeake Kayak Outfitters",
+        "opportunity_id": "006gK00000SXrddQAD",
+        "residual_cents": 224820
+      }
+    ],
+    "pay_cents": 224820,
+    "memo": "INV/2026/00068",
+    "extra": {}
+  },
+  {
+    "case_id": "S26",
+    "case": "card_exact",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 120,
+        "name": "INV/2026/00059",
+        "partner_id": 16,
+        "partner_name": "Lone Star Basecamp",
+        "opportunity_id": "006gK00000SXsEPQA1",
+        "residual_cents": 329276
+      }
+    ],
+    "pay_cents": 329276,
+    "memo": "INV/2026/00059",
+    "extra": {}
+  },
+  {
+    "case_id": "S27",
+    "case": "card_exact",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 119,
+        "name": "INV/2026/00058",
+        "partner_id": 7,
+        "partner_name": "Hudson Valley Camping Co.",
+        "opportunity_id": "006gK00000SXrv3QAD",
+        "residual_cents": 186208
+      }
+    ],
+    "pay_cents": 186208,
+    "memo": "INV/2026/00058",
+    "extra": {}
+  },
+  {
+    "case_id": "S28",
+    "case": "card_exact",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 143,
+        "name": "INV/2026/00078",
+        "partner_id": 7,
+        "partner_name": "Hudson Valley Camping Co.",
+        "opportunity_id": "006gK00000SY2iPQAT",
+        "residual_cents": 605176
+      }
+    ],
+    "pay_cents": 605176,
+    "memo": "INV/2026/00078",
+    "extra": {}
+  },
+  {
+    "case_id": "S29",
+    "case": "card_exact",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 110,
+        "name": "INV/2026/00053",
+        "partner_id": 14,
+        "partner_name": "Great Lakes Adventure Gear",
+        "opportunity_id": "006gK00000SXrTdQAL",
+        "residual_cents": 325485
+      }
+    ],
+    "pay_cents": 325485,
+    "memo": "INV/2026/00053",
+    "extra": {}
+  },
+  {
+    "case_id": "S30",
+    "case": "card_exact",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 139,
+        "name": "INV/2026/00074",
+        "partner_id": 9,
+        "partner_name": "Rocky Mountain Trail Supply",
+        "opportunity_id": "006gK00000SXqUMQA1",
+        "residual_cents": 153090
+      }
+    ],
+    "pay_cents": 153090,
+    "memo": "INV/2026/00074",
+    "extra": {}
+  },
+  {
+    "case_id": "S31",
+    "case": "card_exact",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 154,
+        "name": "INV/2026/00088",
+        "partner_id": 11,
+        "partner_name": "Twin Cities Trailhead",
+        "opportunity_id": "006gK00000SY2s5QAD",
+        "residual_cents": 437190
+      }
+    ],
+    "pay_cents": 437190,
+    "memo": "INV/2026/00088",
+    "extra": {}
+  },
+  {
+    "case_id": "S32",
+    "case": "card_exact",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 159,
+        "name": "INV/2026/00092",
+        "partner_id": 7,
+        "partner_name": "Hudson Valley Camping Co.",
+        "opportunity_id": "006gK00000SY3GHQA1",
+        "residual_cents": 211416
+      }
+    ],
+    "pay_cents": 211416,
+    "memo": "INV/2026/00092",
+    "extra": {}
+  },
+  {
+    "case_id": "S33",
+    "case": "card_exact",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 152,
+        "name": "INV/2026/00086",
+        "partner_id": 16,
+        "partner_name": "Lone Star Basecamp",
+        "opportunity_id": "006gK00000SY33NQAT",
+        "residual_cents": 224825
+      }
+    ],
+    "pay_cents": 224825,
+    "memo": "INV/2026/00086",
+    "extra": {}
+  },
+  {
+    "case_id": "S34",
+    "case": "card_exact",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 163,
+        "name": "INV/2026/00096",
+        "partner_id": 12,
+        "partner_name": "Pacific Crest Provisions",
+        "opportunity_id": "006gK00000SY2nFQAT",
+        "residual_cents": 565590
+      }
+    ],
+    "pay_cents": 565590,
+    "memo": "INV/2026/00096",
+    "extra": {}
+  },
+  {
+    "case_id": "S35",
+    "case": "card_exact",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 138,
+        "name": "INV/2026/00073",
+        "partner_id": 9,
+        "partner_name": "Rocky Mountain Trail Supply",
+        "opportunity_id": "006gK00000SXRkTQAX",
+        "residual_cents": 577500
+      }
+    ],
+    "pay_cents": 577500,
+    "memo": "INV/2026/00073",
+    "extra": {}
+  },
+  {
+    "case_id": "S36",
+    "case": "card_exact",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 128,
+        "name": "INV/2026/00064",
+        "partner_id": 11,
+        "partner_name": "Twin Cities Trailhead",
+        "opportunity_id": "006gK00000SXsmHQAT",
+        "residual_cents": 661735
+      }
+    ],
+    "pay_cents": 661735,
+    "memo": "INV/2026/00064",
+    "extra": {}
+  },
+  {
+    "case_id": "S37",
+    "case": "card_exact",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 167,
+        "name": "INV/2026/00100",
+        "partner_id": 9,
+        "partner_name": "Rocky Mountain Trail Supply",
+        "opportunity_id": "006gK00000SY2dZQAT",
+        "residual_cents": 666776
+      }
+    ],
+    "pay_cents": 666776,
+    "memo": "INV/2026/00100",
+    "extra": {}
+  },
+  {
+    "case_id": "S38",
+    "case": "card_exact",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 160,
+        "name": "INV/2026/00093",
+        "partner_id": 8,
+        "partner_name": "Blue Ridge Outfitters",
+        "opportunity_id": "006gK00000SY2wvQAD",
+        "residual_cents": 148104
+      }
+    ],
+    "pay_cents": 148104,
+    "memo": "INV/2026/00093",
+    "extra": {}
+  },
+  {
+    "case_id": "S39",
+    "case": "card_exact",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 144,
+        "name": "INV/2026/00079",
+        "partner_id": 9,
+        "partner_name": "Rocky Mountain Trail Supply",
+        "opportunity_id": "006gK00000SY2thQAD",
+        "residual_cents": 952935
+      }
+    ],
+    "pay_cents": 952935,
+    "memo": "INV/2026/00079",
+    "extra": {}
+  },
+  {
+    "case_id": "S40",
+    "case": "card_exact",
+    "channel": "card",
+    "invoices": [
+      {
+        "id": 129,
+        "name": "INV/2026/00065",
+        "partner_id": 15,
+        "partner_name": "Green Mountain Gear Exchange",
+        "opportunity_id": "006gK00000SXs4jQAD",
+        "residual_cents": 150930
+      }
+    ],
+    "pay_cents": 150930,
+    "memo": "INV/2026/00065",
+    "extra": {}
+  }
+]

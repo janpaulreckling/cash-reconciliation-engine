@@ -13,3 +13,4 @@ dist/
 *.duckdb
 *.duckdb.wal
 .secrets/
+seeds/stripe_ledger.json

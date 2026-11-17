@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import typer
 from rich.console import Console
 from rich.table import Table
@@ -15,6 +17,9 @@ from recon.warehouse import Warehouse
 app = typer.Typer(help="Cash reconciliation engine (Stripe / bank / ERP).", no_args_is_help=True)
 extract_app = typer.Typer(help="Pull source data into raw DuckDB tables.", no_args_is_help=True)
 app.add_typer(extract_app, name="extract")
+seed_app = typer.Typer(help="Create demo data in the sandboxes (test mode only).",
+                       no_args_is_help=True)
+app.add_typer(seed_app, name="seed")
 console = Console()
 
 
@@ -77,3 +82,39 @@ def status() -> None:
         console.print(runs)
     finally:
         wh.close()
+
+
+@seed_app.command("stripe")
+def seed_stripe(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Print the plan, create nothing."),
+    seed: int = typer.Option(2026, help="RNG seed for the scenario plan."),
+) -> None:
+    """Pay the card cases of the November scenario plan on the Stripe test merchant."""
+    from recon.seed import SEEDS_DIR, open_invoices, write_plan
+    from recon.seed.plan import build_plan
+    from recon.seed.stripe_seed import StripeSeeder
+
+    settings = Settings()
+    wh = Warehouse(settings.duckdb_path)
+    try:
+        invoices = open_invoices(wh)
+    finally:
+        wh.close()
+    if not invoices:
+        console.print("[red]No open invoices in raw.erp_invoices; run `recon extract erp`.[/red]")
+        raise typer.Exit(1)
+    plan = build_plan(invoices, seed)
+    table = Table("case", "scenario", "channel", "invoices", "amount")
+    for s in plan:
+        table.add_row(s.case_id, s.case.value, s.channel.value, ", ".join(s.invoice_names),
+                      f"${s.pay_cents / 100:,.2f}")
+    console.print(table)
+    if dry_run:
+        return
+    write_plan(plan)
+    if settings.stripe_api_key is None or settings.stripe_account is None:
+        console.print("[red]RECON_STRIPE_API_KEY and RECON_STRIPE_ACCOUNT must be set[/red]")
+        raise typer.Exit(1)
+    seeder = StripeSeeder(settings.stripe_api_key.get_secret_value(), settings.stripe_account,
+                          Path(SEEDS_DIR) / "stripe_ledger.json")
+    console.print(seeder.run(plan))
