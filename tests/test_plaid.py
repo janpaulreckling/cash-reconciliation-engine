@@ -126,8 +126,11 @@ def test_seeder_posts_in_small_batches_and_only_once(tmp_path: Path) -> None:
     lines = noise_lines(date(2026, 11, 2)) * 1 + transfer_lines(
         [_scenario(Case.TRANSFER_EXACT, "INV/2026/00001", 50_000)], date(2026, 11, 2),
         date(2026, 11, 3))
-    api = FakePlaid([{"request_id": "r"}] * 10)
+    ready = {"transactions_update_status": "HISTORICAL_UPDATE_COMPLETE"}
+    api = FakePlaid([ready] + [{"request_id": "r"}] * 10)
     seeder = PlaidSeeder(api, tmp_path / "ledger.json")
     assert seeder.post("tok", lines) == {"posted": 5, "already_posted": 0}
-    assert all(len(body["transactions"]) <= BATCH for _, body in api.calls)
+    assert api.calls[0][0] == "/transactions/sync"  # waited for the Item first
+    assert all(len(body["transactions"]) <= BATCH for path, body in api.calls
+               if path == "/sandbox/transactions/create")
     assert PlaidSeeder(api, tmp_path / "ledger.json").post("tok", lines)["posted"] == 0

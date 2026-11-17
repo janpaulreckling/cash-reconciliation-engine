@@ -100,6 +100,56 @@ def extract_bank() -> None:
 
 
 @app.command()
+def match() -> None:
+    """Run the matching engine on the current dbt models and store the decisions."""
+    from collections import Counter
+
+    from recon.matching.config import MatchConfig
+    from recon.matching.engine import Matcher
+    from recon.matching.payouts import match_payouts
+    from recon.matching.store import load_cash, load_invoices, load_payouts, save, today
+
+    cfg = MatchConfig.load()
+    wh = Warehouse(Settings().duckdb_path)
+    try:
+        decisions = Matcher(cfg, load_invoices(wh.con)).run(load_cash(wh.con))
+        payouts, deposits = load_payouts(wh.con)
+        decisions += match_payouts(payouts, deposits, cfg.payout_window_days, today())
+        run_id = save(wh.con, decisions, cfg)
+    finally:
+        wh.close()
+    tiers = Counter(d.tier for d in decisions if d.tier is not None)
+    exceptions = Counter(d.exception for d in decisions if d.exception)
+    console.print(f"run {run_id[:8]}: {len(decisions)} cash items; matched by tier "
+                  f"{dict(sorted(tiers.items()))}; exceptions {dict(exceptions)}")
+
+
+@app.command()
+def evaluate(
+    show_all: bool = typer.Option(False, "--all", help="List every invoice, not only misses."),
+) -> None:
+    """Compare the latest matching run with the seed's ground truth."""
+    from recon.evaluate import metrics, outcomes
+
+    wh = Warehouse(Settings().duckdb_path)
+    try:
+        results = outcomes(wh.con, Path("seeds/expected_matches.csv"))
+    finally:
+        wh.close()
+    table = Table("invoice", "case", "expected", "got", "ok")
+    for o in results:
+        if show_all or not o.correct:
+            exp = f"T{o.expected_tier or '-'} {o.expected_exception or ''}"
+            got = f"T{o.tier or '-'} {', '.join(sorted(o.exceptions))}"
+            table.add_row(o.invoice, o.case, exp, got, "✓" if o.correct else "✗")
+    console.print(table)
+    m = metrics(results)
+    console.print(f"{m['correct']}/{m['invoices']} invoices correct · precision "
+                  f"{m['precision']:.0%} · recall {m['recall']:.0%} · exception accuracy "
+                  f"{m['exception_accuracy']:.0%}")
+
+
+@app.command()
 def status() -> None:
     """Row counts per raw table and the latest extract runs."""
     wh = Warehouse(Settings().duckdb_path)
@@ -173,18 +223,21 @@ def seed_plaid(
             fh.write(f"\nRECON_PLAID_ACCESS_TOKEN={token}\n")
         console.print("Created Plaid sandbox Item; access token saved to .env")
 
-    start, last = date(2026, 11, 2), min(date.today(), date(2026, 11, 16))
-    lines = transfer_lines(load_plan(), start, last) + noise_lines(start)
-    if payouts:
-        wh = Warehouse(settings.duckdb_path)
-        try:
+    start, last = date(2026, 11, 2), min(date.today(), date(2026, 11, 30))
+    wh = Warehouse(settings.duckdb_path)
+    try:
+        invoice_dates = dict(wh.con.execute(
+            "SELECT name, invoice_date FROM raw.erp_invoices WHERE invoice_date IS NOT NULL"
+        ).fetchall())
+        lines = transfer_lines(load_plan(), start, last, invoice_dates) + noise_lines(start)
+        if payouts:
             rows = wh.con.execute(
                 "SELECT id, amount, arrival_date::DATE, trace_id FROM raw.stripe_payouts"
                 " QUALIFY row_number() OVER (PARTITION BY id ORDER BY _loaded_at DESC) = 1"
                 " AND status = 'paid'").fetchall()
-        finally:
-            wh.close()
-        lines += payout_lines([(r[0], r[1], r[2], r[3]) for r in rows])
+            lines += payout_lines([(r[0], r[1], r[2], r[3]) for r in rows])
+    finally:
+        wh.close()
     try:
         console.print(seeder.post(token, lines))
     except ReconError as exc:

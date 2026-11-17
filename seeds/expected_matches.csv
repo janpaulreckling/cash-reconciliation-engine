@@ -3,7 +3,7 @@ S01,transfer_batch,transfer,INV/2026/00099,1516132,3,
 S01,transfer_batch,transfer,INV/2026/00095,1516132,3,
 S01,transfer_batch,transfer,INV/2026/00076,1516132,3,
 S02,transfer_typo,transfer,INV/2026/00085,548340,2,
-S03,transfer_typo,transfer,INV/2026/00082,579225,2,
+S03,transfer_typo,transfer,INV/2026/00082,579225,1,
 S04,transfer_no_ref,transfer,INV/2026/00102,887915,2,
 S05,transfer_short_fee,transfer,INV/2026/00083,487173,2,
 S06,transfer_short_big,transfer,INV/2026/00072,773700,,AMOUNT_MISMATCH

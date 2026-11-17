@@ -6,8 +6,10 @@ the plan, Stripe payout deposits (once Stripe has paid out), and lines that have
 nothing to do with receivables (payroll, rent, a bank fee, an unidentified deposit).
 
 Plaid sign convention: positive amount = money out, negative = money in.
-The endpoint is rate-limited hard, so lines go out in batches of 5 (a batch of 10
-was accepted but silently dropped) and the client backs off on
+Two sandbox traps, both found the hard way: lines posted right after the Item is
+created are accepted (200 OK) and silently dropped, so the seeder waits until Plaid
+reports the Item's history as loaded; and the endpoint is rate-limited hard, so
+lines go out in small batches and the client backs off on
 SANDBOX_TRANSACTIONS_CREATE_LIMIT. A ledger
 (`seeds/plaid_ledger.json`) makes re-runs post only what is missing.
 """
@@ -25,7 +27,7 @@ from recon.seed.plan import Channel, Scenario
 from recon.sources.plaid_source import PlaidAPI
 
 SANDBOX_INSTITUTION = "ins_109508"  # First Platypus Bank
-BATCH = 5  # 10 per call was accepted (200 OK) but silently dropped in the sandbox
+BATCH = 5
 
 
 @dataclass(frozen=True)
@@ -37,10 +39,12 @@ class BankLine:
 
 
 def transfer_lines(plan: list[Scenario], period_start: date, last_day: date,
+                   invoice_dates: dict[str, date] | None = None,
                    seed: int = 2026) -> list[BankLine]:
-    """Customer payments by ACH/wire, spread over the first half of the period."""
+    """Customer payments by ACH/wire within the period, never before the (latest)
+    invoice they pay: nobody wires money for an invoice that doesn't exist yet."""
     rng = random.Random(seed + 1)
-    span = max(0, (last_day - period_start).days)
+    dates = invoice_dates or {}
     lines = []
     for s in plan:
         if s.channel is not Channel.TRANSFER:
@@ -51,7 +55,9 @@ def transfer_lines(plan: list[Scenario], period_start: date, last_day: date,
         if memo.upper().startswith(payer):  # don't repeat the originator name
             memo = memo[len(payer):].strip()
         description = f"{kind} {payer} {memo}".strip()
-        day = period_start + timedelta(days=rng.randint(0, span))
+        earliest = max([period_start, *(dates[i.name] for i in s.invoices if i.name in dates)])
+        earliest = min(earliest, last_day)
+        day = earliest + timedelta(days=rng.randint(0, (last_day - earliest).days))
         lines.append(BankLine(f"transfer:{s.case_id}", day, -s.pay_cents, description))
     return lines
 
@@ -95,6 +101,22 @@ class PlaidSeeder:
         self._ledger_path.parent.mkdir(parents=True, exist_ok=True)
         self._ledger_path.write_text(json.dumps(self.ledger, indent=2, sort_keys=True))
 
+    def wait_until_ready(self, access_token: str, timeout_s: int = 120) -> None:
+        """Block until the Item's initial transaction pull is done."""
+        import time
+
+        deadline = time.monotonic() + timeout_s
+        while time.monotonic() < deadline:
+            page = self._api.post("/transactions/sync",
+                                  {"access_token": access_token, "cursor": "", "count": 1})
+            if page.get("transactions_update_status") == "HISTORICAL_UPDATE_COMPLETE":
+                return
+            time.sleep(5)
+        raise TimeoutError("Plaid Item not ready; re-run the seed in a minute")
+
+    def remove_item(self, access_token: str) -> None:
+        self._api.post("/item/remove", {"access_token": access_token})
+
     def create_item(self) -> str:
         """Create the sandbox Item and return its access token (caller stores it)."""
         public = self._api.post("/sandbox/public_token/create", {
@@ -110,6 +132,8 @@ class PlaidSeeder:
 
     def post(self, access_token: str, lines: list[BankLine]) -> dict[str, int]:
         todo = [ln for ln in lines if ln.key not in self.ledger["posted"]]
+        if todo:
+            self.wait_until_ready(access_token)
         for i in range(0, len(todo), BATCH):
             chunk = todo[i:i + BATCH]
             self._api.post("/sandbox/transactions/create", {

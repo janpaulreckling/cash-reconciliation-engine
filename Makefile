@@ -1,4 +1,4 @@
-.PHONY: install test lint extract status dbt
+.PHONY: install test lint extract status dbt match evaluate pipeline
 
 install:
 	uv sync
@@ -19,3 +19,15 @@ status:
 DBT = uv run --group dbt dbt
 dbt:
 	$(DBT) build --project-dir dbt --profiles-dir dbt
+
+match:
+	uv run recon match
+
+evaluate:
+	uv run recon evaluate
+
+# Full refresh from the live sandboxes: extract -> dbt -> match -> score
+pipeline:
+	uv run recon extract erp && uv run recon extract stripe && uv run recon extract bank
+	$(MAKE) dbt
+	uv run recon match && uv run recon evaluate

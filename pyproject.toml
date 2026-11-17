@@ -13,6 +13,8 @@ dependencies = [
     "rich>=13.7",
     "pytz>=2026.6",
     "stripe>=17.0.0",
+    "rapidfuzz>=3.14.6",
+    "pyyaml>=6.0.3",
 ]
 
 [dependency-groups]
@@ -25,6 +27,7 @@ dev = [
     "ruff>=0.5",
     "mypy>=1.10",
     "types-pytz>=2026.6.0.20261031",
+    "types-pyyaml>=6.0.12.20261113",
 ]
 
 [project.scripts]

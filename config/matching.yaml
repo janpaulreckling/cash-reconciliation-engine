@@ -1,0 +1,27 @@
+# Matching tolerances and thresholds. Reviewed like code: changing a number here
+# changes which cash gets applied automatically.
+
+accept_threshold: 0.90        # below -> exception queue (LOW_CONFIDENCE)
+ambiguity_margin: 0.05        # best vs. second-best closer than this -> AMBIGUOUS
+
+amount_tolerance_cents:
+  stripe: 0                   # card payments are for the exact amount
+  transfer: 100               # bank fees on incoming ACH/wire: at most $1.00, absolute
+
+weights:                      # tier 2 score = weighted sum, each signal in [0, 1]
+  amount: 0.50
+  text: 0.35
+  date: 0.15
+
+date_window_days: 3           # paid between invoice date - 3 and due date + 3 -> full date score
+late_decay_days: 60           # later than that, the date score fades to 0.5
+
+tier3:
+  max_invoices: 6             # one transfer paying up to 6 invoices of one customer
+  lookback_days: 120
+  min_name_score: 0.85        # memo must name the customer
+  score_unique_with_refs: 0.95
+  score_unique: 0.88          # unique subset but memo doesn't list the invoices -> review
+
+payouts:
+  arrival_window_days: 3      # bank deposit within +-3 days of Stripe's arrival_date

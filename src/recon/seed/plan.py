@@ -169,11 +169,35 @@ def build_plan(invoices: list[OpenInvoice], seed: int = 2026) -> list[Scenario]:
     return plan
 
 
+def is_format_variant(invoice_name: str, memo: str | None) -> bool:
+    """True if the memo still contains the invoice number as a standalone number (and no
+    conflicting year), i.e. only the formatting differs: 'INV 2026 82', 'inv-2026-00082',
+    'Invoice 82'. False for real typos such as a dropped digit ('INV20260008').
+    Deliberately string-level, independent of the matching engine's normalizer."""
+    m = re.fullmatch(r"INV/(\d{4})/(\d{5})", invoice_name)
+    if not m or not memo:
+        return False
+    numbers = {int(n) for n in re.findall(r"\d+", memo)}
+    year, num = int(m.group(1)), int(m.group(2))
+    years = {n for n in numbers if 2000 <= n <= 2099}
+    return num in numbers and (not years or year in years)
+
+
+def expected_tier(s: Scenario) -> tuple[int | None, str | None]:
+    tier, exception = EXPECTED[s.case]
+    # A mangled reference that is only reformatted is an exact match after
+    # normalization (tier 1, by design); a real typo needs the fuzzy tier.
+    if s.case in (Case.TRANSFER_TYPO, Case.CARD_NO_METADATA) and \
+            is_format_variant(s.invoices[0].name, s.memo):
+        tier = 1
+    return tier, exception
+
+
 def expected_matches(plan: list[Scenario]) -> list[dict[str, str]]:
     """Ground truth rows: one per (scenario, invoice)."""
     rows = []
     for s in plan:
-        tier, exception = EXPECTED[s.case]
+        tier, exception = expected_tier(s)
         for inv in s.invoices:
             rows.append({
                 "case_id": s.case_id, "case": s.case.value, "channel": s.channel.value,

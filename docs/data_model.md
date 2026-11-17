@@ -94,7 +94,7 @@ Each matcher emits **candidates** with a confidence in [0, 1]. A decision step a
 
 An honest point for the README: Stripe already tells us which charges went into a payout, so A2 is a **control** (does the arithmetic hold?), not a guessing game. The real one-to-many problem is customers who pay several invoices with one wire. That's where tier 3 earns its keep.
 
-**Exception reason codes:** `PAYOUT_NO_COMPONENTS` (manual payout: Stripe lists components only for automatic payouts), `NO_CANDIDATE`, `LOW_CONFIDENCE`, `AMBIGUOUS` (several candidates within 0.05), `AMOUNT_MISMATCH`, `OVERPAYMENT`, `PAYOUT_SUM_BREAK`, `DUPLICATE_PAYMENT`, `UNAPPLIED_CASH`.
+**Exception reason codes:** card side, matched but needs a human: `PARTIAL_PAYMENT`, `REFUNDED`, `PARTIAL_REFUND`, `DISPUTED`, `DUPLICATE_PAYMENT`. Payouts: `PAYOUT_NO_COMPONENTS` (manual payout: Stripe lists components only for automatic payouts), `PAYOUT_SUM_BREAK`, `PAYOUT_NOT_IN_BANK`, `DEPOSIT_WITHOUT_PAYOUT`. Unplaced cash: `NO_CANDIDATE`, `LOW_CONFIDENCE`, `AMBIGUOUS` (several candidates within 0.05), `AMOUNT_MISMATCH`, `OVERPAYMENT`, `PAYOUT_SUM_BREAK`, `DUPLICATE_PAYMENT`, `UNAPPLIED_CASH`.
 
 ## 6. Suggested journal entries
 
