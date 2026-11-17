@@ -1,13 +1,13 @@
-.PHONY: install test lint extract status dbt match evaluate pipeline
+.PHONY: install test lint extract status dbt match evaluate pipeline app
 
 install:
-	uv sync
+	uv sync --group dbt --group app
 
 test:
 	uv run pytest
 
 lint:
-	uv run ruff check . && uv run mypy src
+	uv run ruff check . && uv run --group app mypy src
 
 extract:
 	uv run recon extract erp
@@ -31,3 +31,6 @@ pipeline:
 	uv run recon extract erp && uv run recon extract stripe && uv run recon extract bank
 	$(MAKE) dbt
 	uv run recon match && uv run recon evaluate
+
+app:
+	uv run --group app streamlit run src/recon/app/streamlit_app.py

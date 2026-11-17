@@ -166,6 +166,17 @@ CREATE TABLE IF NOT EXISTS engine.match_decisions (
     suggestion JSON,
     breakdown JSON
 );
+CREATE TABLE IF NOT EXISTS engine.reviews (   -- human decisions on the exception queue
+    review_id VARCHAR PRIMARY KEY,
+    run_id VARCHAR NOT NULL,          -- the matching run the reviewer looked at
+    source VARCHAR NOT NULL,
+    source_id VARCHAR NOT NULL,
+    action VARCHAR NOT NULL,          -- accepted | rejected
+    invoice_number VARCHAR,           -- the link the reviewer confirmed, if any
+    comment VARCHAR,
+    reviewer VARCHAR NOT NULL,
+    decided_at TIMESTAMPTZ NOT NULL
+);
 CREATE OR REPLACE VIEW engine.current_decisions AS
 SELECT d.* FROM engine.match_decisions d
 WHERE d.run_id = (SELECT run_id FROM engine.match_runs ORDER BY started_at DESC LIMIT 1);
