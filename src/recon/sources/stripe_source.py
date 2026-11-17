@@ -35,15 +35,19 @@ class StripeAPI(Protocol):
 class StripeClientAPI:
     """Auto-paginating list calls over the official SDK, with error classification."""
 
-    def __init__(self, api_key: str) -> None:
+    def __init__(self, api_key: str, account: str | None = None) -> None:
         if not api_key.startswith(("sk_test_", "rk_test_")):
             raise PermanentError("Refusing to run against a live Stripe key; use sk_test_...")
         self._client = stripe.StripeClient(api_key, max_network_retries=3)
+        # The merchant is a connected account of the platform key; every call is made
+        # on its behalf (Stripe-Account header).
+        self._options: dict[str, Any] = {"stripe_account": account} if account else {}
 
     def list(self, resource: str, params: dict[str, Any]) -> Iterator[dict[str, Any]]:
         service = getattr(self._client.v1, resource)
         try:
-            for obj in service.list({"limit": 100, **params}).auto_paging_iter():
+            pages = service.list({"limit": 100, **params}, self._options)
+            for obj in pages.auto_paging_iter():
                 yield obj.to_dict()
         except (stripe.APIConnectionError, stripe.RateLimitError) as exc:
             raise TransientError(f"Stripe {resource}: {exc.user_message or exc}") from exc

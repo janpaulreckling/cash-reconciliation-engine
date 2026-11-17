@@ -49,7 +49,8 @@ def extract_stripe() -> None:
         raise typer.Exit(1)
     wh = Warehouse(settings.duckdb_path)
     try:
-        api = StripeClientAPI(settings.stripe_api_key.get_secret_value())
+        api = StripeClientAPI(settings.stripe_api_key.get_secret_value(),
+                              settings.stripe_account)
         result = wh.load("stripe", StripeSource(api).fetch())
     except ReconError as exc:
         console.print(f"[red]Extract failed:[/red] {exc}")

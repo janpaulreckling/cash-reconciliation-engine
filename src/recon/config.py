@@ -15,5 +15,6 @@ class Settings(BaseSettings):
     odoo_password: SecretStr = SecretStr("admin")
 
     stripe_api_key: SecretStr | None = None
+    stripe_account: str | None = None  # connected test merchant (acct_...)
     plaid_client_id: str | None = None
     plaid_secret: SecretStr | None = None
