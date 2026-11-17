@@ -167,6 +167,7 @@ wheels = [
 name = "cash-reconciliation-engine"
 version = "0.1.0"
 source = { editable = "." }
+default-groups = ["app", "dbt", "dev"]
 dependencies = [
     { name = "duckdb" },
     { name = "pydantic" },

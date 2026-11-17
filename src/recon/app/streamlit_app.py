@@ -102,8 +102,12 @@ with tab_queue:
                     "Date": st.column_config.DateColumn(format="MMM D"),
                 },
             )
-            picked = event.selection.rows[0] if event.selection.rows else 0
+            # Deep link: ?item=<source_id> opens that exception (shareable with a colleague).
+            linked_id = st.query_params.get("item")
+            default = next((i for i, r in enumerate(rows) if r["source_id"] == linked_id), 0)
+            picked = event.selection.rows[0] if event.selection.rows else default
             current: dict[str, Any] | None = rows[picked]
+            st.query_params["item"] = rows[picked]["source_id"]
 
     with right:
         if rows:

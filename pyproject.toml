@@ -33,6 +33,11 @@ dev = [
     "types-pyyaml>=6.0.12.20261113",
 ]
 
+[tool.uv]
+# `uv sync` installs everything needed to run the pipeline and the review app
+# (Streamlit Community Cloud builds from uv.lock with a plain sync).
+default-groups = ["dev", "dbt", "app"]
+
 [project.scripts]
 recon = "recon.cli:app"
 
