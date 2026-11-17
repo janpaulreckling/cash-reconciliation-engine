@@ -8,7 +8,7 @@ from dataclasses import asdict
 from decimal import Decimal
 from pathlib import Path
 
-from recon.seed.plan import OpenInvoice, Scenario, expected_matches
+from recon.seed.plan import Case, Channel, OpenInvoice, Scenario, expected_matches
 from recon.warehouse import Warehouse
 
 SEEDS_DIR = Path("seeds")
@@ -45,3 +45,13 @@ def write_plan(plan: list[Scenario], seeds_dir: Path = SEEDS_DIR) -> None:
         writer = csv.DictWriter(fh, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
+
+
+def load_plan(seeds_dir: Path = SEEDS_DIR) -> list[Scenario]:
+    """The committed plan is canonical: later seed steps must not re-derive it from a
+    changed ERP state."""
+    raw = json.loads((seeds_dir / "scenario_plan.json").read_text())
+    return [Scenario(case_id=s["case_id"], case=Case(s["case"]), channel=Channel(s["channel"]),
+                     invoices=[OpenInvoice(**i) for i in s["invoices"]],
+                     pay_cents=s["pay_cents"], memo=s["memo"], extra=s["extra"])
+            for s in raw]

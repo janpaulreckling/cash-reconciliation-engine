@@ -18,3 +18,4 @@ class Settings(BaseSettings):
     stripe_account: str | None = None  # connected test merchant (acct_...)
     plaid_client_id: str | None = None
     plaid_secret: SecretStr | None = None
+    plaid_access_token: SecretStr | None = None  # sandbox Item, written by `recon seed plaid`

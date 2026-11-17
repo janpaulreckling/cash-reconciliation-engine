@@ -1,0 +1,137 @@
+{
+  "added": [
+    {
+      "account_id": "bJVzV8KB7kcMaV7p9QEeINXVoz8b5Wum5B4dB",
+      "account_owner": null,
+      "amount": -4596.32,
+      "authorized_date": "2026-11-16",
+      "authorized_datetime": null,
+      "category": [
+        "Shops",
+        "Sporting Goods"
+      ],
+      "category_id": "19046000",
+      "check_number": null,
+      "counterparties": [],
+      "date": "2026-11-16",
+      "datetime": null,
+      "iso_currency_code": "USD",
+      "location": {
+        "address": null,
+        "city": null,
+        "country": null,
+        "lat": null,
+        "lon": null,
+        "postal_code": null,
+        "region": null,
+        "store_number": null
+      },
+      "logo_url": null,
+      "merchant_category_code": null,
+      "merchant_entity_id": null,
+      "merchant_name": null,
+      "name": "ACH CREDIT CHESAPEAKE KAYAK OUTFITTERS INV/2026/00081",
+      "original_description": "ACH CREDIT CHESAPEAKE KAYAK OUTFITTERS INV/2026/00081",
+      "payment_channel": "other",
+      "payment_meta": {
+        "by_order_of": null,
+        "payee": null,
+        "payer": null,
+        "payment_method": "ACH",
+        "payment_processor": null,
+        "ppd_id": null,
+        "reason": null,
+        "reference_number": null
+      },
+      "pending": false,
+      "pending_transaction_id": null,
+      "personal_finance_category": {
+        "confidence_level": "LOW",
+        "detailed": "INCOME_CONTRACTOR",
+        "primary": "INCOME",
+        "version": "v2"
+      },
+      "personal_finance_category_icon_url": "https://plaid-category-icons.plaid.com/PFC_INCOME.png",
+      "running_balance": null,
+      "transaction_code": null,
+      "transaction_id": "Q5oGo9LEnxhGdXP3bxq9hv5XJR6lpPiw5BR9b",
+      "transaction_type": "place",
+      "unofficial_currency_code": null,
+      "website": null
+    },
+    {
+      "account_id": "bJVzV8KB7kcMaV7p9QEeINXVoz8b5Wum5B4dB",
+      "account_owner": null,
+      "amount": -810,
+      "authorized_date": "2026-10-18",
+      "authorized_datetime": null,
+      "category": [
+        "Food and Drink",
+        "Restaurants"
+      ],
+      "category_id": "13005000",
+      "check_number": null,
+      "counterparties": [
+        {
+          "confidence_level": "VERY_HIGH",
+          "entity_id": "Do7pjknKqXrQkMr7qdV9JXrQ3Em8nzny5rOE1",
+          "logo_url": "https://plaid-merchant-logos.plaid.com/sweetgreen_986.png",
+          "name": "Sweetgreen",
+          "phone_number": null,
+          "type": "merchant",
+          "website": "sweetgreen.com"
+        }
+      ],
+      "date": "2026-10-18",
+      "datetime": null,
+      "iso_currency_code": "USD",
+      "location": {
+        "address": null,
+        "city": null,
+        "country": null,
+        "lat": null,
+        "lon": null,
+        "postal_code": null,
+        "region": null,
+        "store_number": null
+      },
+      "logo_url": "https://plaid-merchant-logos.plaid.com/sweetgreen_986.png",
+      "merchant_category_code": null,
+      "merchant_entity_id": "Do7pjknKqXrQkMr7qdV9JXrQ3Em8nzny5rOE1",
+      "merchant_name": "Sweetgreen",
+      "name": "Sweetgreen inc payroll ppd id",
+      "original_description": "Sweetgreen inc payroll ppd id",
+      "payment_channel": "other",
+      "payment_meta": {
+        "by_order_of": null,
+        "payee": null,
+        "payer": null,
+        "payment_method": null,
+        "payment_processor": null,
+        "ppd_id": null,
+        "reason": null,
+        "reference_number": null
+      },
+      "pending": false,
+      "pending_transaction_id": null,
+      "personal_finance_category": {
+        "confidence_level": "VERY_HIGH",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT",
+        "primary": "FOOD_AND_DRINK",
+        "version": "v2"
+      },
+      "personal_finance_category_icon_url": "https://plaid-category-icons.plaid.com/PFC_FOOD_AND_DRINK.png",
+      "running_balance": null,
+      "transaction_code": null,
+      "transaction_id": "AR3k3qzajAug1lQ9vAr3HNeJJgAb3yC9XLP9P",
+      "transaction_type": "place",
+      "unofficial_currency_code": null,
+      "website": "sweetgreen.com"
+    }
+  ],
+  "modified": [],
+  "removed": [],
+  "has_more": false,
+  "next_cursor": "CURSOR_REDACTED",
+  "request_id": "REDACTED"
+}

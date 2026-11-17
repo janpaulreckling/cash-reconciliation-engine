@@ -104,6 +104,21 @@ RAW_TABLES: dict[str, list[Column]] = {
         ("description", "VARCHAR"),
         ("payout", "VARCHAR"),  # set once the transaction has been paid out
     ],
+    "bank_transactions": [  # Plaid shape; Plaid amounts are positive for money OUT
+        ("id", "VARCHAR NOT NULL"),  # Plaid transaction_id
+        ("account_id", "VARCHAR NOT NULL"),
+        ("date", "DATE NOT NULL"),
+        ("authorized_date", "DATE"),
+        ("amount", "DECIMAL(18, 2) NOT NULL"),
+        ("iso_currency_code", "VARCHAR"),
+        ("name", "VARCHAR"),
+        ("merchant_name", "VARCHAR"),
+        ("original_description", "VARCHAR"),
+        ("payment_channel", "VARCHAR"),
+        ("category", "VARCHAR"),
+        ("pending", "BOOLEAN"),
+        ("removed", "BOOLEAN NOT NULL"),  # Plaid sync reported it as removed
+    ],
     "stripe_payouts": [
         ("id", "VARCHAR NOT NULL"),
         ("amount", "BIGINT NOT NULL"),
@@ -123,6 +138,13 @@ RAW_TABLES: dict[str, list[Column]] = {
 META_DDL = """
 CREATE SCHEMA IF NOT EXISTS raw;
 CREATE SCHEMA IF NOT EXISTS meta;
+CREATE TABLE IF NOT EXISTS meta.source_state (
+    source VARCHAR NOT NULL,
+    key VARCHAR NOT NULL,
+    value VARCHAR,
+    updated_at TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (source, key)
+);
 CREATE TABLE IF NOT EXISTS meta.extract_runs (
     run_id VARCHAR PRIMARY KEY,
     source VARCHAR NOT NULL,
@@ -212,13 +234,16 @@ class Warehouse:
         *,
         since: datetime | None = None,
         cursor: tuple[str, str] | None = None,
+        state: Mapping[str, str] | None = None,
     ) -> RunResult:
         """Append new record versions to one or more raw tables in a single transaction.
 
         Either every table of the run lands and the run is marked succeeded, or nothing
         does and the watermark stays where it was. `cursor=(table, field)` advances the
         watermark to the highest value of that field; without it the source is pulled
-        in full each time and only changed versions are stored.
+        in full each time and only changed versions are stored. `state` (e.g. an API
+        sync cursor) is saved in the same transaction, so it can never run ahead of
+        the rows it covers.
         """
         with self._run(source, since) as run_id:
             # Materialize first: a source failure mid-iteration must not leave a
@@ -235,6 +260,11 @@ class Warehouse:
             try:
                 for table, rows in pulled.items():
                     counts[table] = self._insert_new_versions(table, rows, loaded_at, run_id)
+                for key, value in (state or {}).items():
+                    self.con.execute(
+                        "INSERT OR REPLACE INTO meta.source_state VALUES (?, ?, ?, ?)",
+                        [source, key, value, loaded_at],
+                    )
                 self.con.execute(
                     "UPDATE meta.extract_runs SET status = 'succeeded', finished_at = ?,"
                     " rows_loaded = ?, watermark_to = ? WHERE run_id = ?",
@@ -275,6 +305,25 @@ class Warehouse:
                 batch,
             )
         return len(batch)
+
+    def tombstones(self, table: str, ids: list[str]) -> list[dict[str, Any]]:
+        """Latest stored version of each id, marked removed (for sources that report
+        deletions by id only). Ids never seen before are ignored."""
+        if not ids:
+            return []
+        columns = [name for name, _ in RAW_TABLES[table]]
+        rows = self.con.execute(
+            f"SELECT {', '.join(columns)} FROM raw.{table} WHERE id IN (SELECT unnest(?))"
+            " QUALIFY row_number() OVER (PARTITION BY id ORDER BY _loaded_at DESC) = 1",
+            [ids],
+        ).fetchall()
+        return [{**dict(zip(columns, r, strict=True)), "removed": True} for r in rows]
+
+    def state(self, source: str, key: str) -> str | None:
+        row = self.con.execute(
+            "SELECT value FROM meta.source_state WHERE source = ? AND key = ?", [source, key]
+        ).fetchone()
+        return str(row[0]) if row and row[0] is not None else None
 
     def recent_runs(self, limit: int = 10) -> list[tuple[Any, ...]]:
         return self.con.execute(
