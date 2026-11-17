@@ -70,7 +70,7 @@ class StripeSeeder:
         self._client.v1.payment_methods.attach(pm.id, {"customer": customer},
                                                self._key(s.case_id, attempt, "attach"))
         metadata: dict[str, str] = {}
-        if s.case is not Case.CARD_NO_METADATA:
+        if s.case not in (Case.CARD_NO_METADATA, Case.CARD_BILLING_NAME_ONLY):
             metadata = {"erp_invoice_number": inv.name}
             if inv.opportunity_id:
                 metadata["sf_opportunity_id"] = inv.opportunity_id

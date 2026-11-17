@@ -147,6 +147,8 @@ def evaluate(
     min_precision: float = typer.Option(0.0, help="Exit 1 below this precision (CI gate)."),
     min_recall: float = typer.Option(0.0, help="Exit 1 below this recall (CI gate)."),
     db: str | None = typer.Option(None, help="DuckDB file (default: RECON_DUCKDB_PATH)."),
+    truth: str = typer.Option("seeds", help="Folder with expected_matches.csv and "
+                                            "expected_cash.csv (seeds/holdout for the holdout)."),
 ) -> None:
     """Compare the latest matching run with the seed's ground truth (cash-invoice pairs)."""
     from recon.evaluate import evaluate as run_eval
@@ -154,7 +156,8 @@ def evaluate(
 
     wh = Warehouse(db or Settings().duckdb_path)
     try:
-        ev = run_eval(wh.con, Path("seeds/expected_matches.csv"), Path("seeds/expected_cash.csv"))
+        ev = run_eval(wh.con, Path(truth) / "expected_matches.csv",
+                      Path(truth) / "expected_cash.csv")
     finally:
         wh.close()
     table = Table("invoice", "case", "expected", "got", "ok")
@@ -168,7 +171,7 @@ def evaluate(
     console.print(f"{m['correct']}/{m['invoices']} invoices correct · precision "
                   f"{m['precision']:.0%} of {m['linked_pairs']} linked cash-invoice pairs · "
                   f"recall {m['recall']:.0%} · exception accuracy "
-                  f"{m['exception_accuracy']:.0%}")
+                  f"{m['exception_accuracy']:.0%} · wrong automatic links {m['wrong_auto_links']}")
     if m["precision"] < min_precision or m["recall"] < min_recall:
         console.print(f"[red]Below gate: precision >= {min_precision:.0%}, "
                       f"recall >= {min_recall:.0%} required[/red]")
@@ -229,14 +232,57 @@ def seed_stripe(
     console.print(seeder.run(plan))
 
 
+@seed_app.command("holdout")
+def seed_holdout(
+    dry_run: bool = typer.Option(False, "--dry-run", help="Print the plan, create nothing."),
+) -> None:
+    """Plan + Stripe side of the holdout on invoices the November plan doesn't use."""
+    from recon.seed import SEEDS_DIR, load_plan, open_invoices, write_plan
+    from recon.seed.holdout import build_holdout_plan
+    from recon.seed.stripe_seed import StripeSeeder
+
+    settings = Settings()
+    holdout_dir = Path(SEEDS_DIR) / "holdout"
+    wh = Warehouse(settings.duckdb_path)
+    try:
+        november = {n for s in load_plan() for n in s.invoice_names}
+        fresh = [i for i in open_invoices(wh) if i.name not in november]
+    finally:
+        wh.close()
+    if (holdout_dir / "scenario_plan.json").exists():
+        plan = load_plan(holdout_dir)  # canonical once written
+    else:
+        plan = build_holdout_plan(fresh)
+    table = Table("case", "scenario", "channel", "invoices", "amount", "memo / payer")
+    for s in plan:
+        table.add_row(s.case_id, s.case.value, s.channel.value, ", ".join(s.invoice_names),
+                      f"${s.pay_cents / 100:,.2f}", f"{s.memo or ''} {s.payer or ''}".strip())
+    console.print(table)
+    console.print(f"{len(fresh)} fresh open invoices, {len(plan)} scenarios")
+    if dry_run:
+        return
+    write_plan(plan, holdout_dir)
+    if settings.stripe_api_key is None or settings.stripe_account is None:
+        console.print("[red]RECON_STRIPE_API_KEY and RECON_STRIPE_ACCOUNT must be set[/red]")
+        raise typer.Exit(1)
+    seeder = StripeSeeder(settings.stripe_api_key.get_secret_value(), settings.stripe_account,
+                          Path(SEEDS_DIR) / "stripe_ledger.json")
+    console.print(seeder.run(plan))
+    console.print("Next: recon seed plaid --plan seeds/holdout, extract, then "
+                  "recon seed truth --plan seeds/holdout")
+
+
 @seed_app.command("truth")
-def seed_truth() -> None:
-    """Record which real cash item belongs to which scenario (seeds/expected_cash.csv)."""
+def seed_truth(
+    plan_dir: str = typer.Option("seeds", "--plan", help="seeds or seeds/holdout"),
+) -> None:
+    """Record which real cash item belongs to which scenario (expected_cash.csv)."""
     from recon.seed import SEEDS_DIR, load_plan, write_cash_truth
 
     wh = Warehouse(Settings().duckdb_path)
     try:
-        rows = write_cash_truth(wh, load_plan(), Path(SEEDS_DIR) / "stripe_ledger.json")
+        rows = write_cash_truth(wh, load_plan(Path(plan_dir)),
+                                Path(SEEDS_DIR) / "stripe_ledger.json", Path(plan_dir))
     finally:
         wh.close()
     console.print(f"{len(rows)} cash items mapped to scenarios")
@@ -246,6 +292,7 @@ def seed_truth() -> None:
 def seed_plaid(
     payouts: bool = typer.Option(False, "--payouts",
                                  help="Also post bank deposits for Stripe payouts in raw."),
+    plan_dir: str = typer.Option("seeds", "--plan", help="seeds or seeds/holdout"),
 ) -> None:
     """Post the transfer cases, noise lines and (optionally) Stripe payout deposits."""
     from datetime import date
@@ -268,7 +315,9 @@ def seed_plaid(
         invoice_dates = dict(wh.con.execute(
             "SELECT name, invoice_date FROM raw.erp_invoices WHERE invoice_date IS NOT NULL"
         ).fetchall())
-        lines = transfer_lines(load_plan(), start, last, invoice_dates) + noise_lines(start)
+        lines = transfer_lines(load_plan(Path(plan_dir)), start, last, invoice_dates)
+        if plan_dir == "seeds":
+            lines += noise_lines(start)
         if payouts:
             rows = wh.con.execute(
                 "SELECT id, amount, arrival_date::DATE, trace_id FROM raw.stripe_payouts"

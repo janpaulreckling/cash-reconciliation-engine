@@ -53,7 +53,8 @@ def load_plan(seeds_dir: Path = SEEDS_DIR) -> list[Scenario]:
     raw = json.loads((seeds_dir / "scenario_plan.json").read_text())
     return [Scenario(case_id=s["case_id"], case=Case(s["case"]), channel=Channel(s["channel"]),
                      invoices=[OpenInvoice(**i) for i in s["invoices"]],
-                     pay_cents=s["pay_cents"], memo=s["memo"], extra=s["extra"])
+                     pay_cents=s["pay_cents"], memo=s["memo"], extra=s["extra"],
+                     payer=s.get("payer"))
             for s in raw]
 
 

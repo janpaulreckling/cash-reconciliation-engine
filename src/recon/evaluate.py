@@ -12,7 +12,8 @@ as a precision miss, not hide behind a correct-looking invoice.
 - Recall:    of the invoices the plan says are matchable, how many were linked to their
              own cash at the expected tier.
 - Exception accuracy: of the scenarios that should raise a code, how many raised exactly
-             it on their own cash item, pointing at their own invoice.
+             it on their own cash item, pointing at their own invoice ("REVIEW" = any
+             code, i.e. it must reach a human instead of being auto-applied).
 """
 
 from __future__ import annotations
@@ -41,9 +42,15 @@ class InvoiceOutcome:
     def correct(self) -> bool:
         tier_ok = self.tier == self.expected_tier and (
             self.expected_tier is None or self.linked_to_own_cash)
-        exc_ok = (self.expected_exception in self.exceptions) if self.expected_exception \
-            else not self.exceptions
-        return tier_ok and exc_ok
+        return tier_ok and self.exception_ok
+
+    @property
+    def exception_ok(self) -> bool:
+        if self.expected_exception == "REVIEW":  # any code, as long as a human sees it
+            return bool(self.exceptions - {"WRONG_CASH_LINKED"})
+        if self.expected_exception:
+            return self.expected_exception in self.exceptions
+        return not self.exceptions
 
 
 @dataclass
@@ -109,6 +116,6 @@ def metrics(ev: Evaluation) -> dict[str, float]:
         "precision": share(len(ev.engine_pairs & ev.true_pairs), len(ev.engine_pairs)),
         "recall": share(sum(o.linked_to_own_cash and o.tier == o.expected_tier
                             for o in should), len(should)),
-        "exception_accuracy": share(sum(o.expected_exception in o.exceptions
-                                        for o in with_exc), len(with_exc)),
+        "exception_accuracy": share(sum(o.exception_ok for o in with_exc), len(with_exc)),
+        "wrong_auto_links": len(ev.engine_pairs - ev.true_pairs),
     }

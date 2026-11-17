@@ -44,6 +44,16 @@ class Case(StrEnum):
     TRANSFER_BATCH = "transfer_batch"            # one wire pays 3 invoices -> tier 3
     # nothing arrives
     OPEN = "open"
+    # holdout only: patterns the engine was never tuned on (see seed/holdout.py)
+    CARD_BILLING_NAME_ONLY = "card_billing_name_only"    # no metadata, no description
+    TRANSFER_TRANSPOSED = "transfer_transposed"          # two digits swapped in the ref
+    TRANSFER_WRONG_REF = "transfer_wrong_ref"            # cites another invoice of theirs
+    TRANSFER_ABBREV_PAYER = "transfer_abbrev_payer"      # 'GT LAKES ADV GEAR', no ref
+    TRANSFER_PO_REF = "transfer_po_ref"                  # their PO number, not our invoice
+    TRANSFER_SAME_AMOUNT = "transfer_same_amount"        # two open invoices, same amount
+    TRANSFER_TWO_NO_REF = "transfer_two_no_ref"          # pays two invoices, cites none
+    TRANSFER_EARLY = "transfer_early"                    # bank date before invoice date
+    TRANSFER_THIRD_PARTY = "transfer_third_party"        # parent company pays
 
 
 # Expected outcome per case: (tier that should match it, exception code or None).
@@ -63,6 +73,17 @@ EXPECTED: dict[Case, tuple[int | None, str | None]] = {
     Case.TRANSFER_OVERPAY: (None, "OVERPAYMENT"),
     Case.TRANSFER_BATCH: (3, None),
     Case.OPEN: (None, None),
+    # Holdout expectations are what an AR clerk would do, written before running the
+    # engine on them. "REVIEW" = must not be auto-applied; any exception code is fine.
+    Case.CARD_BILLING_NAME_ONLY: (2, None),
+    Case.TRANSFER_TRANSPOSED: (2, None),
+    Case.TRANSFER_WRONG_REF: (None, "REVIEW"),
+    Case.TRANSFER_ABBREV_PAYER: (2, None),
+    Case.TRANSFER_PO_REF: (2, None),
+    Case.TRANSFER_SAME_AMOUNT: (None, "REVIEW"),
+    Case.TRANSFER_TWO_NO_REF: (None, "REVIEW"),
+    Case.TRANSFER_EARLY: (1, None),
+    Case.TRANSFER_THIRD_PARTY: (1, None),
 }
 
 DIRTY_CARD = [Case.CARD_NO_METADATA, Case.CARD_NO_METADATA, Case.CARD_PARTIAL,
@@ -90,7 +111,8 @@ class Scenario:
     invoices: list[OpenInvoice]
     pay_cents: int                      # what the customer sends
     memo: str | None = None             # bank memo / card description
-    extra: dict[str, int] = field(default_factory=dict)  # e.g. refund_cents
+    extra: dict[str, int] = field(default_factory=dict)  # e.g. refund_cents, day_offset
+    payer: str | None = None            # who pays, if not the invoiced customer
 
     @property
     def invoice_names(self) -> list[str]:

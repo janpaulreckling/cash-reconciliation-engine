@@ -49,7 +49,7 @@ def transfer_lines(plan: list[Scenario], period_start: date, last_day: date,
     for s in plan:
         if s.channel is not Channel.TRANSFER:
             continue
-        payer = s.invoices[0].partner_name.upper()
+        payer = (s.payer or s.invoices[0].partner_name).upper()
         kind = "WIRE IN" if s.pay_cents >= 1_000_000 or len(s.invoices) > 1 else "ACH CREDIT"
         memo = (s.memo or "").strip()
         if memo.upper().startswith(payer):  # don't repeat the originator name
@@ -58,6 +58,10 @@ def transfer_lines(plan: list[Scenario], period_start: date, last_day: date,
         earliest = max([period_start, *(dates[i.name] for i in s.invoices if i.name in dates)])
         earliest = min(earliest, last_day)
         day = earliest + timedelta(days=rng.randint(0, (last_day - earliest).days))
+        if "day_offset" in s.extra and s.invoices[0].name in dates:
+            day = dates[s.invoices[0].name] + timedelta(days=s.extra["day_offset"])
+        if s.extra.get("no_payer"):
+            description = f"{kind} {memo}".strip()
         lines.append(BankLine(f"transfer:{s.case_id}", day, -s.pay_cents, description))
     return lines
 
