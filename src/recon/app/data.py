@@ -10,7 +10,10 @@ from typing import Any
 
 import duckdb
 
+from recon.snapshot import fingerprint as snapshot_fingerprint  # re-exported for the app
 from recon.warehouse import Warehouse
+
+__all__ = ["snapshot_fingerprint"]  # plus the functions below, used by the app
 
 
 def db_path() -> str:
@@ -39,7 +42,7 @@ def ensure_demo_db() -> None:
     stamp = target.with_name(target.name + ".snapshot")
     if target.exists() and not stamp.exists() and target.name != "demo.duckdb":
         return  # a real warehouse (local use), not a demo build: never touch it
-    if target.exists() and stamp.read_text() == snapshot_fingerprint():
+    if target.exists() and stamp.exists() and stamp.read_text() == snapshot_fingerprint():
         return
     target.unlink(missing_ok=True)  # demo built from an older snapshot: rebuild
     building = target.with_name(target.name + ".building")
@@ -47,20 +50,8 @@ def ensure_demo_db() -> None:
         leftover.unlink(missing_ok=True)
     subprocess.run([sys.executable, "-m", "recon.cli", "demo", "--db", str(building)],
                    check=True, env={**os.environ, "RECON_DUCKDB_PATH": str(building)})
-    building.rename(target)
-    stamp.write_text(snapshot_fingerprint())
-
-
-def snapshot_fingerprint() -> str:
-    """Changes whenever the committed snapshot or the matching config changes."""
-    import hashlib
-    from pathlib import Path
-
-    h = hashlib.sha256()
-    for f in sorted([*Path("seeds/snapshot").glob("*.csv"), Path("config/matching.yaml")]):
-        h.update(f.name.encode())
-        h.update(f.read_bytes())
-    return h.hexdigest()
+    building.rename(target)  # `recon demo` already wrote the stamp next to the temp file
+    building.with_name(building.name + ".snapshot").rename(stamp)
 
 
 def _query(sql: str, params: list[Any] | None = None) -> list[dict[str, Any]]:

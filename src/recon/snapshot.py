@@ -52,3 +52,15 @@ def load(wh: Warehouse, in_dir: Path = SNAPSHOT_DIR) -> dict[str, int]:
         row = wh.con.execute(f"SELECT count(*) FROM raw.{table}").fetchone()
         counts[table] = int(row[0]) if row else 0
     return counts
+
+
+def fingerprint(in_dir: Path = SNAPSHOT_DIR) -> str:
+    """Changes whenever the committed snapshot or the matching config changes, so a demo
+    warehouse built from an older snapshot is recognized as stale."""
+    import hashlib
+
+    h = hashlib.sha256()
+    for f in sorted([*in_dir.glob("*.csv"), Path("config/matching.yaml")]):
+        h.update(f.name.encode())
+        h.update(f.read_bytes())
+    return h.hexdigest()

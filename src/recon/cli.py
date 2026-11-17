@@ -359,8 +359,8 @@ def demo(db: str = typer.Option("demo.duckdb", help="New DuckDB file to build.")
     """Rebuild everything from the snapshot: load -> dbt -> match. No keys needed."""
     from recon.snapshot import load
 
-    if Path(db).exists():
-        Path(db).unlink()
+    for stale in (db, db + ".wal", db + ".snapshot"):
+        Path(stale).unlink(missing_ok=True)
     wh = Warehouse(db)
     try:
         console.print(load(wh))
@@ -369,6 +369,9 @@ def demo(db: str = typer.Option("demo.duckdb", help="New DuckDB file to build.")
     _run_dbt(db, "models")  # models only: the controls need the match decisions
     _run_matching(db)
     _run_dbt(db)  # rebuild marts from the decisions, then run every test
+    from recon.snapshot import fingerprint
+
+    Path(db + ".snapshot").write_text(fingerprint())  # lets the app spot a stale demo
     console.print(f"Demo warehouse ready: {db}  (open it with RECON_DUCKDB_PATH={db} make app)")
 
 
