@@ -55,12 +55,17 @@ def load(wh: Warehouse, in_dir: Path = SNAPSHOT_DIR) -> dict[str, int]:
 
 
 def fingerprint(in_dir: Path = SNAPSHOT_DIR) -> str:
-    """Changes whenever the committed snapshot or the matching config changes, so a demo
-    warehouse built from an older snapshot is recognized as stale."""
+    """Changes whenever anything that shapes the demo's numbers changes: the snapshot,
+    the matching config, the matching engine or the dbt project. A demo warehouse
+    built from older inputs is then recognized as stale and rebuilt."""
     import hashlib
 
+    inputs = [*in_dir.glob("*.csv"), Path("config/matching.yaml"),
+              *Path("src/recon/matching").glob("*.py"),
+              *(p for p in Path("dbt").rglob("*")
+                if p.suffix in {".sql", ".yml", ".csv"} and "target" not in p.parts)]
     h = hashlib.sha256()
-    for f in sorted([*in_dir.glob("*.csv"), Path("config/matching.yaml")]):
+    for f in sorted(inputs):
         h.update(f.name.encode())
         h.update(f.read_bytes())
     return h.hexdigest()
