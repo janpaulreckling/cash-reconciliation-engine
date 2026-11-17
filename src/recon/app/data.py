@@ -14,7 +14,13 @@ from recon.warehouse import Warehouse
 
 
 def db_path() -> str:
-    return os.environ.get("RECON_DUCKDB_PATH", "recon.duckdb")
+    """The real warehouse when running with sandbox credentials (.env), otherwise the
+    demo warehouse rebuilt from the committed snapshot (e.g. Streamlit Cloud)."""
+    from pathlib import Path
+
+    if "RECON_DUCKDB_PATH" in os.environ:
+        return os.environ["RECON_DUCKDB_PATH"]
+    return "recon.duckdb" if Path(".env").exists() else "demo.duckdb"
 
 
 def ensure_demo_db() -> None:
@@ -30,14 +36,31 @@ def ensure_demo_db() -> None:
     from pathlib import Path
 
     target = Path(db_path())
-    if target.exists():
+    stamp = target.with_name(target.name + ".snapshot")
+    if target.exists() and not stamp.exists() and target.name != "demo.duckdb":
+        return  # a real warehouse (local use), not a demo build: never touch it
+    if target.exists() and stamp.read_text() == snapshot_fingerprint():
         return
+    target.unlink(missing_ok=True)  # demo built from an older snapshot: rebuild
     building = target.with_name(target.name + ".building")
     for leftover in (building, building.with_name(building.name + ".wal")):
         leftover.unlink(missing_ok=True)
     subprocess.run([sys.executable, "-m", "recon.cli", "demo", "--db", str(building)],
                    check=True, env={**os.environ, "RECON_DUCKDB_PATH": str(building)})
     building.rename(target)
+    stamp.write_text(snapshot_fingerprint())
+
+
+def snapshot_fingerprint() -> str:
+    """Changes whenever the committed snapshot or the matching config changes."""
+    import hashlib
+    from pathlib import Path
+
+    h = hashlib.sha256()
+    for f in sorted([*Path("seeds/snapshot").glob("*.csv"), Path("config/matching.yaml")]):
+        h.update(f.name.encode())
+        h.update(f.read_bytes())
+    return h.hexdigest()
 
 
 def _query(sql: str, params: list[Any] | None = None) -> list[dict[str, Any]]:

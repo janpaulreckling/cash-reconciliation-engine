@@ -42,3 +42,10 @@ def test_swapped_cash_is_a_precision_miss_even_though_tiers_look_right(tmp_path:
     m = metrics(ev)
     assert m["precision"] == 0.0 and m["recall"] == 0.0 and m["correct"] == 0
     assert all("WRONG_CASH_LINKED" in o.exceptions for o in ev.outcomes)
+
+
+def test_pairs_of_another_scenario_set_do_not_count(tmp_path: Path) -> None:
+    con, exp, cash = _setup(tmp_path, [("b1", "INV/2026/00001", 1, None),
+                                       ("b2", "INV/2026/00002", 1, None),
+                                       ("other", "INV/2026/09999", 1, None)])
+    assert metrics(evaluate(con, exp, cash))["precision"] == 1.0

@@ -85,6 +85,13 @@ def evaluate(con: duckdb.DuckDBPyConnection, expected_csv: Path,
             for target in ([inv] if inv else json.loads(suggestion or "[]")):
                 exc_on[(sid, target)].add(exc)
 
+    # Only pairs that touch this plan's cash or invoices count; another scenario set in
+    # the same run (e.g. the holdout next to the designed cases) is scored separately.
+    plan_cash = {sid for ids in cash_of.values() for sid in ids}
+    plan_invoices = {r["invoice"] for r in expected}
+    engine_pairs = {(sid, inv) for sid, inv in engine_pairs
+                    if sid in plan_cash or inv in plan_invoices}
+
     outcomes = []
     for r in expected:
         o = InvoiceOutcome(r["invoice"], r["case_id"], r["case"],

@@ -5,6 +5,7 @@ Run locally:  uv run --group app streamlit run src/recon/app/streamlit_app.py
 
 from __future__ import annotations
 
+import re
 from collections import defaultdict
 from typing import Any
 
@@ -77,7 +78,7 @@ tab_queue, tab_matched, tab_journal, tab_payouts = st.tabs(
 
 # ------------------------------------------------------------------ queue
 with tab_queue:
-    left, right = st.columns([1.05, 1], gap="large")
+    left, right = st.columns([1.35, 1], gap="large")
     with left:
         show_done = st.toggle("Show decided items", value=False)
         rows = exceptions if show_done else open_items
@@ -86,12 +87,13 @@ with tab_queue:
                     "journal review.</div>")
         else:
             table = [{
-                "Priority": {1: "■ Money at risk", 2: "▲ Review", 3: "! Confirm"}[r["priority"]],
+                "Priority": {1: "■ At risk", 2: "▲ Review", 3: "! Confirm"}[r["priority"]],
                 "Issue": CODES.get(r["exception_code"], (r["exception_code"],))[0],
                 "Amount": r["amount_cents"] / 100,
                 "Date": r["cash_date"],
-                "Source": "Card" if r["source"] == "stripe_charge" else "Bank",
-                "Detail": (r["cash_text"] or "").strip()[:60],
+                # Bank prefixes are noise in a list; the evidence panel shows the full text.
+                "Detail": re.sub(r"^(ACH CREDIT|WIRE IN)\s+", "",
+                                 (r["cash_text"] or "").strip()),
                 "Decision": (r["review_action"] or "").capitalize(),
             } for r in rows]
             event = st.dataframe(
@@ -99,7 +101,9 @@ with tab_queue:
                 on_select="rerun", selection_mode="single-row",
                 column_config={
                     "Amount": st.column_config.NumberColumn(format="$%,.2f"),
-                    "Date": st.column_config.DateColumn(format="MMM D"),
+                    "Date": st.column_config.DateColumn(format="MMM D", width="small"),
+                    "Priority": st.column_config.TextColumn(width="small"),
+                    "Detail": st.column_config.TextColumn(width="large"),
                 },
             )
             # Deep link: ?item=<source_id> opens that exception (shareable with a colleague).
@@ -142,7 +146,7 @@ with tab_queue:
                         ("Open in ERP", money(inv["amount_residual_cents"])),
                         ("Cash vs open", f'<span class="diff">{money(gap, signed=True)}</span>'),
                     ]))
-            if e["breakdown"] and "total" in e["breakdown"]:
+            if candidates and e["breakdown"] and "total" in e["breakdown"]:
                 st.html(f'<div class="card"><h4>Why this candidate</h4>'
                         f'{meters(e["breakdown"])}</div>')
 

@@ -25,3 +25,6 @@ jobs:
       # then fail the build if matching quality drops.
       - run: uv run recon demo --db ci.duckdb
       - run: uv run recon evaluate --db ci.duckdb --min-precision 1.0 --min-recall 0.95
+      # Holdout (patterns the engine wasn't tuned on): never a wrong automatic match,
+      # recall may be lower; the README reports the misses.
+      - run: uv run recon evaluate --db ci.duckdb --truth seeds/holdout --min-precision 1.0 --min-recall 0.9

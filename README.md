@@ -6,13 +6,16 @@
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![dbt](https://img.shields.io/badge/dbt-DuckDB-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
+[![Live demo](https://img.shields.io/badge/live%20demo-streamlit-ff4b4b)](https://northwind-cash-recon.streamlit.app)
+
+**[Open the live demo](https://northwind-cash-recon.streamlit.app)**: the review app running on a snapshot of the real run, no login.
 
 ![Review app: close status and the exception queue](docs/img/review-queue-light.png)
 
 ```mermaid
 flowchart LR
     A["1 · Payments come in<br/><sub>Stripe card payments, bank transfers</sub>"] --> B["2 · Automatic matching<br/><sub>against open ERP invoices</sub>"]
-    B -->|"75% of payments"| C["Booked: suggested<br/>journal entries"]
+    B -->|"~4 in 5 payments"| C["Booked: suggested<br/>journal entries"]
     B -->|"the rest"| D["3 · Only exceptions<br/>go to a human"]
 ```
 
@@ -22,12 +25,12 @@ A Stripe payout that lands in the bank is not one payment. It's the net of dozen
 
 | Without it | With it |
 |---|---|
-| Every payment matched by hand (~2–3 min each) | 3 of 4 payments matched automatically, with the evidence attached |
+| Every payment matched by hand (~2–3 min each) | ~4 in 5 payments matched automatically, with the evidence attached |
 | Fees, refunds and disputes reconstructed from Stripe exports | Suggested journal entries for every fee, refund, dispute and short-payment |
 | "Does the Stripe clearing account tie out?" answered at the end | Checked on every run, to the cent |
 | Problems found when the customer calls | A prioritized queue: money at risk first, each item with a recommended action |
 
-*At 1,500 payments a month, a typical mid-market volume, automating 75% saves about 40–55 hours per close (assuming 2–3 minutes per manual match). That's an estimate from those stated assumptions, not a measurement.*
+*At 1,500 payments a month, a typical mid-market volume, automating 78% saves about 40–60 hours per close (assuming 2–3 minutes per manual match). That's an estimate from those stated assumptions, not a measurement.*
 
 ## At a glance
 
@@ -35,15 +38,15 @@ All numbers come from a real run against real sandbox APIs (Odoo ERP, Stripe tes
 
 | | |
 |---|---|
-| Payments processed | **40** (27 card, 13 bank), **$170,398.54** |
-| Matched automatically | **30 (75%)**, none wrong |
-| Sent to review | **10**, each with a reason code and recommended action |
-| Stripe clearing vs. Stripe balance | **ties to the cent** ($91,286.64) |
-| Designed test scenarios | **42 / 42** invoices handled as specified; **0** wrong automatic matches across 37 cash-invoice pairs |
-| Holdout scenarios (patterns the engine was not tuned on) | *pending, reported separately below* |
-| Automated checks | 76 unit tests · 50 dbt build steps (models, unit + data tests) · end-to-end run in CI |
+| Payments processed | **59** (33 card, 26 bank), **$210,923.98** |
+| Matched automatically | **46 (78%)**, none to the wrong cash |
+| Sent to review | **13**, each with a reason code and recommended action |
+| Stripe clearing vs. Stripe balance | **ties to the cent** ($109,942.59) |
+| Designed scenarios (written with the engine) | **42 / 42** invoices as specified · **0** wrong automatic matches in 37 cash-invoice pairs |
+| **Holdout** (new patterns, expectations fixed first) | **17 / 20** as specified · **0** wrong automatic matches in 16 pairs · recall 93% |
+| Automated checks | 77 unit tests · 50 dbt build steps (models, unit + data tests) · both scenario sets gated in CI |
 
-> **About those numbers.** The 42 scenarios were designed together with the engine, so they prove the mechanics, not generalization. That's why there's a separate [holdout](#holdout-unseen-patterns) with new patterns and expectations written down before the engine saw them.
+> **About those numbers.** The 42 designed scenarios were written together with the engine, so they prove the mechanics, not generalization. The [holdout](#holdout-unseen-patterns) uses new invoices and payment patterns whose expected outcomes were committed before the engine ran on them. Its misses are reported as they came out.
 
 ## Try it in one command
 
@@ -112,7 +115,23 @@ Scored as **cash-invoice pairs**: linking the right invoice to another customer'
 
 ### Holdout: unseen patterns
 
-*Pending.* A second batch of real invoices, paid with patterns the engine was never tuned on: transposed digits, citing the wrong invoice, abbreviated payer names, PO numbers instead of invoice numbers, two invoices of the same amount, early payment, a parent company paying for a subsidiary. Expectations are written from an AR clerk's point of view in [`plan.py`](src/recon/seed/plan.py) before the run. Results will be reported here as they come out, misses included.
+25 new real invoices, paid through Stripe and the bank with patterns the engine was never tuned on. The expected outcome of each case was written down from an AR clerk's point of view and committed ([`seeds/holdout`](seeds/holdout)) before the first matching run on them.
+
+| Pattern | Expected | Engine | |
+|---|---|---|---|
+| Transposed digits in the reference (×2) | match (fuzzy) | match (fuzzy) | ✓ |
+| Customer's PO number instead of our invoice number | match (fuzzy) | match (fuzzy) | ✓ |
+| Paid a day before the invoice date | match (exact) | match (exact) | ✓ |
+| Parent company pays for a subsidiary | match (exact) | match (exact) | ✓ |
+| Card payment with only the billing name (×2) | match (fuzzy) | match (fuzzy) | ✓ |
+| $0.40 bank fee short / $50 short | match + write-off / exception | same | ✓ |
+| One transfer for two invoices, no references | human review | `LOW_CONFIDENCE` | ✓ |
+| Exact references, card and bank (×6) | match (exact) | match (exact) | ✓ |
+| Two open invoices of the same amount, no reference | human review | matched by date fit | ✗ |
+| Cites a *different* open invoice of the same customer | human review | matched by amount and name | ✗ |
+| Abbreviated payer name (`PACIFIC CREST PROV`), no reference | match (fuzzy) | `UNAPPLIED_CASH` | ✗ |
+
+**What the misses mean:** no cash was applied to the wrong invoice (0 wrong automatic matches). Two cases were applied automatically where a clerk would have looked first. Both went to the right invoice, but one of them ignored a conflicting reference, which is a real risk. That's the next rule to add: when the memo cites a different open invoice of the same customer, send it to review. One case was missed, and it went to review instead of being booked. Fixing these now would leave the holdout unable to measure the fix, so it needs a fresh holdout first.
 
 ## Design decisions
 
