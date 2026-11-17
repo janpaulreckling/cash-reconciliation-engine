@@ -1,0 +1,9 @@
+account,name,type
+1010,Operating Bank (checking 1000),asset
+1150,Stripe Clearing,asset
+1160,Disputed Funds Held by Stripe,asset
+1200,Accounts Receivable,asset
+2050,Unapplied Cash,liability
+6150,Merchant Processing Fees,expense
+6160,Bank Charges,expense
+6170,Dispute Fees,expense

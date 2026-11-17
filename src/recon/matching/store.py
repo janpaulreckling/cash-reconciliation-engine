@@ -11,33 +11,7 @@ import duckdb
 
 from recon.matching.engine import Cash, Decision, Invoice
 from recon.matching.payouts import Deposit, Payout
-
-DDL = """
-CREATE SCHEMA IF NOT EXISTS engine;  -- not "recon": that is the DuckDB catalog name
-CREATE TABLE IF NOT EXISTS engine.match_runs (
-    run_id VARCHAR PRIMARY KEY,
-    started_at TIMESTAMPTZ NOT NULL,
-    config JSON NOT NULL,
-    decisions INTEGER NOT NULL
-);
-CREATE TABLE IF NOT EXISTS engine.match_decisions (
-    run_id VARCHAR NOT NULL,
-    source VARCHAR NOT NULL,          -- stripe_charge | bank_receipt | stripe_payout
-    source_id VARCHAR NOT NULL,
-    tier INTEGER,                     -- 1 exact, 2 fuzzy, 3 one-to-many, NULL = not placed
-    score DOUBLE NOT NULL,
-    rule VARCHAR,
-    invoice_number VARCHAR,           -- one row per linked invoice
-    applied_cents BIGINT,
-    writeoff_cents BIGINT,
-    exception_code VARCHAR,
-    suggestion JSON,
-    breakdown JSON
-);
-CREATE OR REPLACE VIEW engine.current_decisions AS
-SELECT d.* FROM engine.match_decisions d
-WHERE d.run_id = (SELECT run_id FROM engine.match_runs ORDER BY started_at DESC LIMIT 1);
-"""
+from recon.warehouse import ENGINE_DDL as DDL  # shared with Warehouse init
 
 
 def load_invoices(con: duckdb.DuckDBPyConnection) -> list[Invoice]:

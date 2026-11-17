@@ -144,6 +144,33 @@ RAW_TABLES: dict[str, list[Column]] = {
     ],
 }
 
+ENGINE_DDL = """
+CREATE SCHEMA IF NOT EXISTS engine;  -- not "recon": that is the DuckDB catalog name
+CREATE TABLE IF NOT EXISTS engine.match_runs (
+    run_id VARCHAR PRIMARY KEY,
+    started_at TIMESTAMPTZ NOT NULL,
+    config JSON NOT NULL,
+    decisions INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS engine.match_decisions (
+    run_id VARCHAR NOT NULL,
+    source VARCHAR NOT NULL,          -- stripe_charge | bank_receipt | stripe_payout
+    source_id VARCHAR NOT NULL,
+    tier INTEGER,                     -- 1 exact, 2 fuzzy, 3 one-to-many, NULL = not placed
+    score DOUBLE NOT NULL,
+    rule VARCHAR,
+    invoice_number VARCHAR,           -- one row per linked invoice
+    applied_cents BIGINT,
+    writeoff_cents BIGINT,
+    exception_code VARCHAR,
+    suggestion JSON,
+    breakdown JSON
+);
+CREATE OR REPLACE VIEW engine.current_decisions AS
+SELECT d.* FROM engine.match_decisions d
+WHERE d.run_id = (SELECT run_id FROM engine.match_runs ORDER BY started_at DESC LIMIT 1);
+"""
+
 META_DDL = """
 CREATE SCHEMA IF NOT EXISTS raw;
 CREATE SCHEMA IF NOT EXISTS meta;
@@ -199,6 +226,7 @@ class Warehouse:
         self.con = duckdb.connect(path)
         self.con.execute("SET TimeZone = 'UTC'")
         self.con.execute(META_DDL)
+        self.con.execute(ENGINE_DDL)  # so dbt marts compile even before the first match run
         for table, cols in RAW_TABLES.items():
             col_sql = ", ".join(f"{name} {type_}" for name, type_ in cols)
             self.con.execute(

@@ -14,3 +14,10 @@ sources:
       - name: bank_transactions
         description: Plaid transactions. Plaid sign convention, positive = money out.
       - name: bank_accounts
+
+  - name: engine
+    description: Written by `recon match`. One row per decision (and per linked invoice).
+    tables:
+      - name: current_decisions
+        description: Decisions of the latest matching run.
+      - name: match_runs

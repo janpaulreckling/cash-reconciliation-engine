@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: fct_cash_decisions
+    description: Every cash item with the engine's decision, linked invoice and score breakdown.
+    columns:
+      - name: status
+        data_tests:
+          - accepted_values:
+              arguments: {values: ["auto_matched", "matched_needs_review", "exception"]}
+  - name: fct_exceptions
+    description: The review queue, one row per cash item, prioritized by money at risk.
+    columns:
+      - name: source_id
+        data_tests: [not_null]
+  - name: fct_journal_suggestions
+    description: Suggested (never posted) journal entry lines; every entry balances.
+    columns:
+      - name: account_name
+        data_tests: [not_null]   # every account used exists in the chart of accounts
+  - name: rpt_close_status
+    description: Close KPIs for the period header of the review app and the Power BI report.
