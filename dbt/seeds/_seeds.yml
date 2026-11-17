@@ -13,3 +13,12 @@ seeds:
         data_tests:
           - accepted_values:
               arguments: {values: ["stripe_payout", "customer_receipt", "other"]}
+
+  - name: excluded_stripe_charges
+    description: >
+      Stripe charges that are not customer payments (e.g. a connectivity probe made while
+      setting up the test merchant). Excluded from staging with the reason on record, so
+      the raw layer and the snapshot stay exactly as recorded.
+    columns:
+      - name: charge_id
+        data_tests: [unique, not_null]

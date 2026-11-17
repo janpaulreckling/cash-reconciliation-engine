@@ -30,12 +30,14 @@ st.set_page_config(page_title="Cash Reconciliation · Northwind", page_icon="◧
 st.html(css())
 
 @st.cache_resource(show_spinner="Building the demo warehouse from the committed snapshot…")
-def _bootstrap() -> bool:
+def _bootstrap(snapshot: str) -> bool:
+    # Keyed on the snapshot fingerprint: a new committed snapshot rebuilds the demo
+    # warehouse in the running cloud process, no manual reboot needed.
     data.ensure_demo_db()
     return True
 
 
-_bootstrap()
+_bootstrap(data.snapshot_fingerprint())
 status = data.close_status()
 if not status:
     st.markdown('<div class="empty">No matching run yet. Run <code>make pipeline</code> '
@@ -68,7 +70,7 @@ st.html('<div class="tiles">' + "".join([
     tile("Applied to invoices", money(status["cash_applied_cents"]),
          f"of {money(status['open_ar_cents'])} open AR"),
     tile("Stripe clearing", money(status["stripe_clearing_cents"]),
-         "equals Stripe balance not yet paid out", ok=True),
+         "ties to Stripe's balance (tested)", ok=True),
     tile("Unapplied cash", money(status["unapplied_cash_cents"]),
          "parked until identified"),
 ]) + "</div>")

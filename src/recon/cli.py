@@ -122,14 +122,18 @@ def _run_matching(db_path: str) -> None:
                   f"{dict(sorted(tiers.items()))}; exceptions {dict(exceptions)}")
 
 
-def _run_dbt(db_path: str) -> None:
+def _run_dbt(db_path: str, command: str = "build") -> None:
     import os
 
     from dbt.cli.main import dbtRunner
 
     os.environ["RECON_DUCKDB_PATH"] = db_path
-    result = dbtRunner().invoke(["build", "--project-dir", "dbt", "--profiles-dir", "dbt",
-                                 "--quiet"])
+    args = ["seed", "run"] if command == "models" else [command]
+    for cmd in args:
+        result = dbtRunner().invoke([cmd, "--project-dir", "dbt", "--profiles-dir", "dbt",
+                                     "--quiet"])
+        if not result.success:
+            break
     if not result.success:
         console.print("[red]dbt build failed[/red]")
         raise typer.Exit(1)
@@ -362,9 +366,9 @@ def demo(db: str = typer.Option("demo.duckdb", help="New DuckDB file to build.")
         console.print(load(wh))
     finally:
         wh.close()
-    _run_dbt(db)
+    _run_dbt(db, "models")  # models only: the controls need the match decisions
     _run_matching(db)
-    _run_dbt(db)  # marts read the decisions the match just wrote
+    _run_dbt(db)  # rebuild marts from the decisions, then run every test
     console.print(f"Demo warehouse ready: {db}  (open it with RECON_DUCKDB_PATH={db} make app)")
 
 

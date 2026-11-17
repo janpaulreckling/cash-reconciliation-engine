@@ -14,3 +14,4 @@ select
     status,
     payout          as payout_id
 from latest
+where coalesce(source, '') not in (select charge_id from {{ ref('excluded_stripe_charges') }})

@@ -18,3 +18,5 @@ select
     balance_transaction                       as balance_transaction_id
 from latest
 where status = 'succeeded'
+  -- documented exclusions (setup/test traffic), see seeds/excluded_stripe_charges.csv
+  and id not in (select charge_id from {{ ref('excluded_stripe_charges') }})

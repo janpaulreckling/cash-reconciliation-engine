@@ -30,7 +30,7 @@ A Stripe payout that lands in the bank is not one payment. It's the net of dozen
 | "Does the Stripe clearing account tie out?" answered at the end | Checked on every run, to the cent |
 | Problems found when the customer calls | A prioritized queue: money at risk first, each item with a recommended action |
 
-*At 1,500 payments a month, a typical mid-market volume, automating 78% saves about 40–60 hours per close (assuming 2–3 minutes per manual match). That's an estimate from those stated assumptions, not a measurement.*
+*At 1,500 payments a month, a typical mid-market volume, automating 79% saves about 40–60 hours per close (assuming 2–3 minutes per manual match). That's an estimate from those stated assumptions, not a measurement.*
 
 ## At a glance
 
@@ -38,13 +38,13 @@ All numbers come from a real run against real sandbox APIs (Odoo ERP, Stripe tes
 
 | | |
 |---|---|
-| Payments processed | **59** (33 card, 26 bank), **$210,923.98** |
-| Matched automatically | **46 (78%)**, none to the wrong cash |
-| Sent to review | **13**, each with a reason code and recommended action |
-| Stripe clearing vs. Stripe balance | **ties to the cent** ($109,942.59) |
+| Payments processed | **58** (32 card, 26 bank), **$210,423.98** |
+| Matched automatically | **46 (79%)**, none to the wrong cash |
+| Sent to review | **12**, each with a reason code and recommended action |
+| Stripe clearing vs. Stripe balance | **ties to the cent** ($109,442.59), enforced by a dbt test |
 | Designed scenarios (written with the engine) | **42 / 42** invoices as specified · **0** wrong automatic matches in 37 cash-invoice pairs |
 | **Holdout** (new patterns, expectations fixed first) | **17 / 20** as specified · **0** wrong automatic matches in 16 pairs · recall 93% |
-| Automated checks | 77 unit tests · 50 dbt build steps (models, unit + data tests) · both scenario sets gated in CI |
+| Automated checks | 77 unit tests · 54 dbt build steps (models, unit + data tests) · both scenario sets gated in CI |
 
 > **About those numbers.** The 42 designed scenarios were written together with the engine, so they prove the mechanics, not generalization. The [holdout](#holdout-unseen-patterns) uses new invoices and payment patterns whose expected outcomes were committed before the engine ran on them. Its misses are reported as they came out.
 
@@ -140,6 +140,8 @@ Scored as **cash-invoice pairs**: linking the right invoice to another customer'
 
 Every record comes from a real system: invoices from Odoo 17 (fed from Salesforce by the sibling project), card payments from Stripe test mode, bank lines from the Plaid Sandbox. Seed scripts *create* the messy cases in those systems and record the expected outcome next to them, which turns matching quality into a measurable number. A committed snapshot of one run lets CI and the demo work without keys.
 
+One Stripe charge is excluded on the record: a connectivity probe made while setting up the test merchant ([`excluded_stripe_charges.csv`](dbt/seeds/excluded_stripe_charges.csv)). The raw layer and the snapshot keep it exactly as recorded.
+
 Things the real APIs taught along the way: Stripe test mode can't backdate charges, so the close period is the current month. A Stripe sandbox refuses test bank accounts on the platform itself, so Northwind is a Connect test merchant. Plaid accepts transactions posted right after an Item is created (200 OK) and silently drops them.
 </details>
 
@@ -155,7 +157,7 @@ Things the real APIs taught along the way: Stripe test mode can't backdate charg
 <summary><b>Controls a controller would ask for</b></summary>
 
 - **Payout sum:** every automatic Stripe payout equals the charges, fees, refunds and adjustments Stripe swept into it, to the cent (dbt test).
-- **Clearing ties out:** suggested entries keep Stripe Clearing equal to the balance Stripe actually holds.
+- **Clearing ties out:** suggested entries keep Stripe Clearing equal to the balance Stripe actually holds (dbt test).
 - **Double entry:** every suggested journal entry balances (dbt test).
 - **No over-application:** no invoice receives more than was open on it (dbt test).
 - **History, not overwrite:** raw tables keep every version of every record, so a cancelled invoice can't come back as posted and an auditor sees what each system said when.
