@@ -148,24 +148,26 @@ def evaluate(
     min_recall: float = typer.Option(0.0, help="Exit 1 below this recall (CI gate)."),
     db: str | None = typer.Option(None, help="DuckDB file (default: RECON_DUCKDB_PATH)."),
 ) -> None:
-    """Compare the latest matching run with the seed's ground truth."""
-    from recon.evaluate import metrics, outcomes
+    """Compare the latest matching run with the seed's ground truth (cash-invoice pairs)."""
+    from recon.evaluate import evaluate as run_eval
+    from recon.evaluate import metrics
 
     wh = Warehouse(db or Settings().duckdb_path)
     try:
-        results = outcomes(wh.con, Path("seeds/expected_matches.csv"))
+        ev = run_eval(wh.con, Path("seeds/expected_matches.csv"), Path("seeds/expected_cash.csv"))
     finally:
         wh.close()
     table = Table("invoice", "case", "expected", "got", "ok")
-    for o in results:
+    for o in ev.outcomes:
         if show_all or not o.correct:
             exp = f"T{o.expected_tier or '-'} {o.expected_exception or ''}"
             got = f"T{o.tier or '-'} {', '.join(sorted(o.exceptions))}"
             table.add_row(o.invoice, o.case, exp, got, "✓" if o.correct else "✗")
     console.print(table)
-    m = metrics(results)
+    m = metrics(ev)
     console.print(f"{m['correct']}/{m['invoices']} invoices correct · precision "
-                  f"{m['precision']:.0%} · recall {m['recall']:.0%} · exception accuracy "
+                  f"{m['precision']:.0%} of {m['linked_pairs']} linked cash-invoice pairs · "
+                  f"recall {m['recall']:.0%} · exception accuracy "
                   f"{m['exception_accuracy']:.0%}")
     if m["precision"] < min_precision or m["recall"] < min_recall:
         console.print(f"[red]Below gate: precision >= {min_precision:.0%}, "
@@ -225,6 +227,19 @@ def seed_stripe(
     seeder = StripeSeeder(settings.stripe_api_key.get_secret_value(), settings.stripe_account,
                           Path(SEEDS_DIR) / "stripe_ledger.json")
     console.print(seeder.run(plan))
+
+
+@seed_app.command("truth")
+def seed_truth() -> None:
+    """Record which real cash item belongs to which scenario (seeds/expected_cash.csv)."""
+    from recon.seed import SEEDS_DIR, load_plan, write_cash_truth
+
+    wh = Warehouse(Settings().duckdb_path)
+    try:
+        rows = write_cash_truth(wh, load_plan(), Path(SEEDS_DIR) / "stripe_ledger.json")
+    finally:
+        wh.close()
+    console.print(f"{len(rows)} cash items mapped to scenarios")
 
 
 @seed_app.command("plaid")

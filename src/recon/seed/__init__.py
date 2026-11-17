@@ -55,3 +55,46 @@ def load_plan(seeds_dir: Path = SEEDS_DIR) -> list[Scenario]:
                      invoices=[OpenInvoice(**i) for i in s["invoices"]],
                      pay_cents=s["pay_cents"], memo=s["memo"], extra=s["extra"])
             for s in raw]
+
+
+def write_cash_truth(wh: Warehouse, plan: list[Scenario], stripe_ledger: Path,
+                     seeds_dir: Path = SEEDS_DIR) -> list[dict[str, str]]:
+    """Which real cash item belongs to which scenario, as created in the sandboxes.
+
+    Card cases: the seed ledger knows the PaymentIntents; Stripe's charge carries the
+    PaymentIntent id. Bank cases: the seeded line is regenerated deterministically and
+    found by exact description and amount. Every scenario with cash must resolve to
+    exactly the expected number of items, or this fails loudly.
+    """
+    from recon.seed.plaid_seed import transfer_lines
+
+    ledger = json.loads(stripe_ledger.read_text())["cases"]
+    charge_of = dict(wh.con.execute(
+        "SELECT payment_intent, id FROM raw.stripe_charges").fetchall())
+    invoice_dates = dict(wh.con.execute(
+        "SELECT name, invoice_date FROM raw.erp_invoices WHERE invoice_date IS NOT NULL"
+    ).fetchall())
+    from datetime import date
+
+    lines = {ln.key: ln for ln in transfer_lines(plan, date(2026, 11, 2), date(2026, 11, 30),
+                                                 invoice_dates)}
+    rows: list[dict[str, str]] = []
+    for s in plan:
+        if s.channel is Channel.CARD:
+            for pi in ledger[s.case_id]["payment_intents"]:
+                rows.append({"case_id": s.case_id, "source": "stripe_charge",
+                             "source_id": charge_of[pi]})
+        elif s.channel is Channel.TRANSFER:
+            ln = lines[f"transfer:{s.case_id}"]
+            hits = wh.con.execute(
+                "SELECT DISTINCT id FROM raw.bank_transactions WHERE NOT removed"
+                " AND coalesce(original_description, name) = ? AND amount = ?",
+                [ln.description, ln.amount_cents / 100]).fetchall()  # both Plaid-signed
+            if len(hits) != 1:
+                raise RuntimeError(f"{s.case_id}: expected 1 bank line, found {len(hits)}")
+            rows.append({"case_id": s.case_id, "source": "bank_receipt", "source_id": hits[0][0]})
+    with (seeds_dir / "expected_cash.csv").open("w", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=["case_id", "source", "source_id"])
+        writer.writeheader()
+        writer.writerows(rows)
+    return rows
