@@ -57,6 +57,14 @@ CODES: dict[str, tuple[str, str, str, str]] = {
     "AMBIGUOUS": ("Ambiguous", "warning",
                   "Two or more invoices fit equally well, so nothing was applied.",
                   "Pick the right invoice from the candidates."),
+    "REFERENCE_CONFLICT": ("Reference conflict", "warning",
+                           "The amount fits one invoice, but the payment names a different "
+                           "open invoice of the same customer.",
+                           "Ask which invoice the customer meant before applying."),
+    "SEARCH_LIMIT": ("Too many combinations", "warning",
+                     "One payment could cover many combinations of this customer's open "
+                     "invoices; the engine stops searching rather than guess.",
+                     "Ask the customer for a remittance advice listing the invoices."),
     "LOW_CONFIDENCE": ("Low confidence", "warning",
                        "A likely match, but below the auto-apply threshold.",
                        "Confirm the suggested invoice(s)."),

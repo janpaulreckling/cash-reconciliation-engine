@@ -30,7 +30,7 @@ A Stripe payout that lands in the bank is not one payment. It's the net of dozen
 | "Does the Stripe clearing account tie out?" answered at the end | Checked on every run, to the cent |
 | Problems found when the customer calls | A prioritized queue: money at risk first, each item with a recommended action |
 
-*At 1,500 payments a month, a typical mid-market volume, automating 79% saves about 40–60 hours per close (assuming 2–3 minutes per manual match). That's an estimate from those stated assumptions, not a measurement.*
+*At 1,500 payments a month, a typical mid-market volume, automating 78% saves about 40–60 hours per close (assuming 2–3 minutes per manual match). That's an estimate from those stated assumptions, not a measurement.*
 
 ## At a glance
 
@@ -39,12 +39,12 @@ All numbers come from a real run against real sandbox APIs (Odoo ERP, Stripe tes
 | | |
 |---|---|
 | Payments processed | **58** (32 card, 26 bank), **$210,423.98** |
-| Matched automatically | **46 (79%)**, none to the wrong cash |
-| Sent to review | **12**, each with a reason code and recommended action |
+| Matched automatically | **45 (78%)**, none to the wrong cash |
+| Sent to review | **13**, each with a reason code and recommended action |
 | Stripe clearing vs. Stripe balance | **ties to the cent** ($109,442.59), enforced by a dbt test |
 | Designed scenarios (written with the engine) | **42 / 42** invoices as specified · **0** wrong automatic matches in 37 cash-invoice pairs |
-| **Holdout** (new patterns, expectations fixed first) | **17 / 20** as specified · **0** wrong automatic matches in 16 pairs · recall 93% |
-| Automated checks | 77 unit tests · 54 dbt build steps (models, unit + data tests) · both scenario sets gated in CI |
+| **Holdout** (new patterns, expectations fixed first) | **17 / 20** as specified on the first run · **0** wrong automatic matches in 16 pairs · recall 93% |
+| Automated checks | 85 unit and property tests, including false-positive traps · 55 dbt build steps (models, unit + data tests) · both scenario sets gated in CI |
 
 > **About those numbers.** The 42 designed scenarios were written together with the engine, so they prove the mechanics, not generalization. The [holdout](#holdout-unseen-patterns) uses new invoices and payment patterns whose expected outcomes were committed before the engine ran on them. Its misses are reported as they came out.
 
@@ -128,10 +128,12 @@ Scored as **cash-invoice pairs**: linking the right invoice to another customer'
 | One transfer for two invoices, no references | human review | `LOW_CONFIDENCE` | ✓ |
 | Exact references, card and bank (×6) | match (exact) | match (exact) | ✓ |
 | Two open invoices of the same amount, no reference | human review | matched by date fit | ✗ |
-| Cites a *different* open invoice of the same customer | human review | matched by amount and name | ✗ |
+| Cites a *different* open invoice of the same customer | human review | matched by amount and name (since fixed, see below) | ✗ |
 | Abbreviated payer name (`PACIFIC CREST PROV`), no reference | match (fuzzy) | `UNAPPLIED_CASH` | ✗ |
 
-**What the misses mean:** no cash was applied to the wrong invoice (0 wrong automatic matches). Two cases were applied automatically where a clerk would have looked first. Both went to the right invoice, but one of them ignored a conflicting reference, which is a real risk. That's the next rule to add: when the memo cites a different open invoice of the same customer, send it to review. One case was missed, and it went to review instead of being booked. Fixing these now would leave the holdout unable to measure the fix, so it needs a fresh holdout first.
+**What the misses mean:** no cash was applied to the wrong invoice (0 wrong automatic matches). Two cases were applied automatically where a clerk would have looked first. Both went to the right invoice, but one ignored a conflicting reference, which is a real risk. One case was missed, and it went to review instead of being booked.
+
+**What changed because of it:** the conflicting-reference case is now a rule (`REFERENCE_CONFLICT`: the amount fits one invoice but the memo names another open invoice of the same customer, so it goes to review), with a failing test written first. Re-scoring the same holdout gives 18/20, but the holdout found that rule, so it can't measure it independently. 17/20 stays the reported result until a fresh holdout exists.
 
 ## Design decisions
 
@@ -184,7 +186,7 @@ seeds/            scenario plans, ground truth, snapshot of the real run
 docs/             data model and design notes
 ```
 
-Full data model and matching design: [docs/data_model.md](docs/data_model.md).
+Full data model and matching design: [docs/data_model.md](docs/data_model.md). Every defect found along the way, with its fix and test: [docs/findings.md](docs/findings.md).
 
 ## Related
 

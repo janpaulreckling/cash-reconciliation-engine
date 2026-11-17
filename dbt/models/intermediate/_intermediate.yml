@@ -13,3 +13,34 @@ models:
     columns:
       - name: payout_id
         data_tests: [unique, not_null]
+
+unit_tests:
+  - name: bank_lines_are_classified_safely
+    description: >
+      Traps for the receipt classifier. A Stripe payout must never pose as a customer
+      transfer, money going out (a refund we send) is never incoming cash, and a
+      December deposit is outside the November close.
+    model: int_bank__classified
+    overrides:
+      vars:
+        close_period_start: "2026-11-01"
+        close_period_end: "2026-11-30"
+    given:
+      - input: ref('stg_bank__transactions')
+        rows:
+          - {bank_transaction_id: p1, posted_date: "2026-11-20", amount_cents: 912345, description: "STRIPE TRANSFER NORTHWIND OUTFITTERS ST-8F2K", category_detailed: TRANSFER_IN_DEPOSIT}
+          - {bank_transaction_id: c1, posted_date: "2026-11-20", amount_cents: 912345, description: "ACH CREDIT BLUE RIDGE OUTFITTERS INV/2026/00072", category_detailed: INCOME_CONTRACTOR}
+          - {bank_transaction_id: r1, posted_date: "2026-11-21", amount_cents: -50000, description: "ACH DEBIT REFUND CASCADE PADDLE CO", category_detailed: TRANSFER_OUT}
+          - {bank_transaction_id: d1, posted_date: "2026-12-01", amount_cents: 50000, description: "ACH CREDIT DESERT SKY EXPEDITIONS", category_detailed: INCOME_CONTRACTOR}
+          - {bank_transaction_id: w1, posted_date: "2026-11-15", amount_cents: 81000, description: "Sweetgreen inc payroll ppd id", category_detailed: FOOD_AND_DRINK_RESTAURANT}
+      - input: ref('bank_rules')
+        rows:
+          - {rule_id: R01, pattern: '(?i)\bpayroll\b', cash_class: other, reason: payroll}
+          - {rule_id: R03, pattern: '(?i)^(STRIPE (TRANSFER|PAYOUT))\b', cash_class: stripe_payout, reason: stripe}
+    expect:
+      rows:
+        - {bank_transaction_id: p1, cash_class: stripe_payout, in_close_period: true}
+        - {bank_transaction_id: c1, cash_class: customer_receipt, in_close_period: true}
+        - {bank_transaction_id: r1, cash_class: other, in_close_period: true}
+        - {bank_transaction_id: d1, cash_class: customer_receipt, in_close_period: false}
+        - {bank_transaction_id: w1, cash_class: other, in_close_period: true}

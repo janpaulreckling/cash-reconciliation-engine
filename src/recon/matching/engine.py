@@ -138,6 +138,13 @@ class Matcher:
         best, inv = ranked[0]
         if best["total"] < self.cfg.accept_threshold:
             return None
+        cited = [n for n in self._cited(cash) if self.remaining.get(n, 0) > 0]
+        if cited and inv.number not in cited:
+            # The amount fits one invoice but the customer named another open one.
+            # Which one they meant is a question for a human, not for the score.
+            return Decision(cash.source, cash.id, None, best["total"], [], [],
+                            exception="REFERENCE_CONFLICT", breakdown=best, rule="fuzzy",
+                            suggestion=[*cited, inv.number])
         if len(ranked) > 1 and best["total"] - ranked[1][0]["total"] < self.cfg.ambiguity_margin:
             return Decision(cash.source, cash.id, None, best["total"], [], [],
                             exception="AMBIGUOUS", breakdown=best, rule="fuzzy",
@@ -155,10 +162,25 @@ class Matcher:
         for invs in by_partner.values():
             if name_score(invs[0].partner_name, cash.text) < self.cfg.t3_min_name_score:
                 continue
-            subsets = [combo for k in range(2, min(self.cfg.t3_max_invoices, len(invs)) + 1)
-                       for combo in itertools.combinations(invs, k)
-                       if abs(sum(self.remaining[i.number] for i in combo) - cash.amount_cents)
-                       <= self.cfg.tolerance_transfer]
+            limited = Decision(cash.source, cash.id, None, 0.0, [], [],
+                               exception="SEARCH_LIMIT", rule="subset-sum",
+                               breakdown={"open_invoices": float(len(invs))})
+            if len(invs) > self.cfg.t3_max_candidates:
+                return limited  # never search a truncated list: "unique" could be wrong
+            subsets: list[tuple[Invoice, ...]] = []
+            tried = 0
+            for k in range(2, min(self.cfg.t3_max_invoices, len(invs)) + 1):
+                for combo in itertools.combinations(invs, k):
+                    tried += 1
+                    if tried > self.cfg.t3_max_combinations:
+                        return limited
+                    if abs(sum(self.remaining[i.number] for i in combo) - cash.amount_cents) \
+                            <= self.cfg.tolerance_transfer:
+                        subsets.append(combo)
+                        if len(subsets) > 1:
+                            break  # two fits already make it ambiguous
+                if len(subsets) > 1:
+                    break
             if len(subsets) != 1:
                 if subsets:
                     return Decision(cash.source, cash.id, None, 0.0, [], [],

@@ -15,6 +15,7 @@ select
         when 'DISPUTED' then 1 when 'PAYOUT_SUM_BREAK' then 1 when 'PAYOUT_NOT_IN_BANK' then 1
         when 'DUPLICATE_PAYMENT' then 2 when 'OVERPAYMENT' then 2 when 'AMOUNT_MISMATCH' then 2
         when 'UNAPPLIED_CASH' then 2 when 'NO_CANDIDATE' then 2 when 'AMBIGUOUS' then 2
+        when 'REFERENCE_CONFLICT' then 2
         else 3
     end                                             as priority,  -- 1 = money at risk
     date_diff('day', any_value(cash_date), current_date) as age_days

@@ -23,6 +23,8 @@ class MatchConfig:
     t3_min_name_score: float
     t3_score_with_refs: float
     t3_score_unique: float
+    t3_max_candidates: int
+    t3_max_combinations: int
     payout_window_days: int
 
     @classmethod
@@ -43,5 +45,7 @@ class MatchConfig:
             t3_min_name_score=c["tier3"]["min_name_score"],
             t3_score_with_refs=c["tier3"]["score_unique_with_refs"],
             t3_score_unique=c["tier3"]["score_unique"],
+            t3_max_candidates=c["tier3"]["max_candidates"],
+            t3_max_combinations=c["tier3"]["max_combinations"],
             payout_window_days=c["payouts"]["arrival_window_days"],
         )

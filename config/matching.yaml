@@ -22,6 +22,8 @@ tier3:
   min_name_score: 0.85        # memo must name the customer
   score_unique_with_refs: 0.95
   score_unique: 0.88          # unique subset but memo doesn't list the invoices -> review
+  max_candidates: 20          # more open invoices than this for one customer -> review
+  max_combinations: 100000    # hard search budget per payment -> review (SEARCH_LIMIT)
 
 payouts:
   arrival_window_days: 3      # bank deposit within +-3 days of Stripe's arrival_date

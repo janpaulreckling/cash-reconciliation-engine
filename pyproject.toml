@@ -31,6 +31,7 @@ dev = [
     "mypy>=1.10",
     "types-pytz>=2026.6.0.20261031",
     "types-pyyaml>=6.0.12.20261113",
+    "hypothesis>=6.170.15",
 ]
 
 [tool.uv]
