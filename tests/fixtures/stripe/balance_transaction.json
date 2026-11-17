@@ -1,0 +1,26 @@
+{
+  "id": "txn_3UcflnE31R39y65f1FFZbu7Q",
+  "object": "balance_transaction",
+  "amount": 123456,
+  "available_on": 1794896491,
+  "balance_type": "payments",
+  "created": 1794896491,
+  "currency": "usd",
+  "description": "Probe payment",
+  "exchange_rate": null,
+  "fee": 3610,
+  "fee_details": [
+    {
+      "amount": 3610,
+      "application": null,
+      "currency": "usd",
+      "description": "Stripe processing fees",
+      "type": "stripe_fee"
+    }
+  ],
+  "net": 119846,
+  "reporting_category": "charge",
+  "source": "ch_3UcflnE31R39y65f1PNQYnBF",
+  "status": "available",
+  "type": "charge"
+}
