@@ -145,6 +145,17 @@ class Matcher:
             return Decision(cash.source, cash.id, None, best["total"], [], [],
                             exception="REFERENCE_CONFLICT", breakdown=best, rule="fuzzy",
                             suggestion=[*cited, inv.number])
+        if best["ref"] < 1.0:
+            # Without an exact reference, candidates the amount and the text can't tell
+            # apart are a tie. The date ranks the suggestions but never decides: customers
+            # do pay before the invoice date.
+            ties = [i for sc, i in ranked[1:]
+                    if sc["amount"] == best["amount"]
+                    and abs(sc["text"] - best["text"]) < self.cfg.ambiguity_margin]
+            if ties:
+                return Decision(cash.source, cash.id, None, best["total"], [], [],
+                                exception="AMBIGUOUS", breakdown=best, rule="fuzzy",
+                                suggestion=[inv.number, *(i.number for i in ties)])
         if len(ranked) > 1 and best["total"] - ranked[1][0]["total"] < self.cfg.ambiguity_margin:
             return Decision(cash.source, cash.id, None, best["total"], [], [],
                             exception="AMBIGUOUS", breakdown=best, rule="fuzzy",

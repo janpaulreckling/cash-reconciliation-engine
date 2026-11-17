@@ -119,3 +119,17 @@ def test_no_cash_used_twice_and_no_invoice_over_applied(
     for i in invoices:
         assert applied.get(i.number, 0) <= i.residual_cents
         assert m.remaining[i.number] >= 0
+
+
+# O1: same amount, no reference: the date may rank suggestions but never decide ---
+def test_same_amount_without_reference_is_ambiguous_even_if_dates_differ() -> None:
+    # The twin is dated after the payment. Customers do pay before the invoice date
+    # (the holdout has one), so the date may rank the suggestions but not decide.
+    paid = Invoice("INV/2026/00001", 1, "Hudson Valley Camping Co.", date(2026, 11, 2),
+                   date(2026, 12, 2), 157_872)
+    twin = Invoice("INV/2026/00002", 1, "Hudson Valley Camping Co.", date(2026, 11, 20),
+                   date(2026, 12, 20), 157_872)
+    [d] = Matcher(CFG, [paid, twin]).run(
+        [bank("b", 157_872, "ACH CREDIT HUDSON VALLEY CAMPING CO.")])
+    assert d.tier is None and d.exception == "AMBIGUOUS"
+    assert d.suggestion[0] == "INV/2026/00001"  # better date fit is ranked first

@@ -20,6 +20,7 @@ Defects and risks found while building and reviewing the engine, with the fix an
 | F12 | A demo database built by `recon demo` had no snapshot stamp, and the app crashed opening it | Low | `recon demo` writes the stamp; a missing stamp means stale | Manual: local app check (no automated test) |
 | F13 | Plaid sandbox silently dropped transactions posted right after an Item was created | Medium (data) | Wait for `HISTORICAL_UPDATE_COMPLETE` before posting | `test_seeder_posts_in_small_batches_and_only_once` |
 | F14 | A setup connectivity probe appeared as a customer payment | Low | Excluded on the record (`excluded_stripe_charges.csv`); raw and snapshot unchanged | dbt `unique_excluded_stripe_charges_charge_id`; clearing tie-out test covers the exclusion |
+| F15 | Two open invoices of the same amount and no reference: the engine picked the one whose dates fit better, which is a guess. Customers do pay before invoice dates (found by the holdout, raised in review) | Medium | A tie on amount and text → `AMBIGUOUS`; the date only ranks the suggestions | `test_same_amount_without_reference_is_ambiguous_even_if_dates_differ` (failed before the fix) |
 
 ## False-positive traps checked (already handled, now pinned by tests)
 
@@ -36,6 +37,5 @@ Defects and risks found while building and reviewing the engine, with the fix an
 
 | # | Finding | Severity | Plan |
 |---|---|---|---|
-| O1 | Two open invoices of the same amount, no reference: the engine picks the one whose dates fit better instead of asking | Low (right invoice in the holdout, but a guess) | Treat date as a tie-breaker only when references also agree; evaluate on a fresh holdout |
-| O2 | An abbreviated payer name (`PACIFIC CREST PROV`) isn't recognized | Low (safe failure: goes to review) | Customer alias table maintained by AR; evaluate on a fresh holdout |
-| O3 | Stripe payouts not exercised with live data yet (the first ones arrive after the 2-day settlement delay) | Medium | Re-run extract and bank seed once payouts exist; the payout sum and deposit checks are unit-tested |
+| O1 | An abbreviated payer name (`PACIFIC CREST PROV`) isn't recognized | Low (safe failure: goes to review) | Customer alias table maintained by AR; evaluate on a fresh holdout |
+| O2 | Stripe payouts not exercised with live data yet (the first ones arrive after the 2-day settlement delay) | Medium | Re-run extract and bank seed once payouts exist; the payout sum and deposit checks are unit-tested |

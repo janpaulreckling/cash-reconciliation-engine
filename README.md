@@ -15,7 +15,7 @@
 ```mermaid
 flowchart LR
     A["1 · Payments come in<br/><sub>Stripe card payments, bank transfers</sub>"] --> B["2 · Automatic matching<br/><sub>against open ERP invoices</sub>"]
-    B -->|"~4 in 5 payments"| C["Booked: suggested<br/>journal entries"]
+    B -->|"~3 in 4 payments"| C["Booked: suggested<br/>journal entries"]
     B -->|"the rest"| D["3 · Only exceptions<br/>go to a human"]
 ```
 
@@ -25,12 +25,12 @@ A Stripe payout that lands in the bank is not one payment. It's the net of dozen
 
 | Without it | With it |
 |---|---|
-| Every payment matched by hand (~2–3 min each) | ~4 in 5 payments matched automatically, with the evidence attached |
+| Every payment matched by hand (~2–3 min each) | ~3 in 4 payments matched automatically, with the evidence attached |
 | Fees, refunds and disputes reconstructed from Stripe exports | Suggested journal entries for every fee, refund, dispute and short-payment |
 | "Does the Stripe clearing account tie out?" answered at the end | Checked on every run, to the cent |
 | Problems found when the customer calls | A prioritized queue: money at risk first, each item with a recommended action |
 
-*At 1,500 payments a month, a typical mid-market volume, automating 78% saves about 40–60 hours per close (assuming 2–3 minutes per manual match). That's an estimate from those stated assumptions, not a measurement.*
+*At 1,500 payments a month, a typical mid-market volume, automating 76% saves about 40–55 hours per close (assuming 2–3 minutes per manual match). That's an estimate from those stated assumptions, not a measurement.*
 
 ## At a glance
 
@@ -39,12 +39,12 @@ All numbers come from a real run against real sandbox APIs (Odoo ERP, Stripe tes
 | | |
 |---|---|
 | Payments processed | **58** (32 card, 26 bank), **$210,423.98** |
-| Matched automatically | **45 (78%)**, none to the wrong cash |
-| Sent to review | **13**, each with a reason code and recommended action |
+| Matched automatically | **44 (76%)**, none to the wrong cash |
+| Sent to review | **14**, each with a reason code and recommended action |
 | Stripe clearing vs. Stripe balance | **ties to the cent** ($109,442.59), enforced by a dbt test |
 | Designed scenarios (written with the engine) | **42 / 42** invoices as specified · **0** wrong automatic matches in 37 cash-invoice pairs |
 | **Holdout** (new patterns, expectations fixed first) | **17 / 20** as specified on the first run · **0** wrong automatic matches in 16 pairs · recall 93% |
-| Automated checks | 85 unit and property tests, including false-positive traps · 55 dbt build steps (models, unit + data tests) · both scenario sets gated in CI |
+| Automated checks | 86 unit and property tests, including false-positive traps · 55 dbt build steps (models, unit + data tests) · both scenario sets gated in CI |
 
 > **About those numbers.** The 42 designed scenarios were written together with the engine, so they prove the mechanics, not generalization. The [holdout](#holdout-unseen-patterns) uses new invoices and payment patterns whose expected outcomes were committed before the engine ran on them. Its misses are reported as they came out.
 
@@ -127,13 +127,13 @@ Scored as **cash-invoice pairs**: linking the right invoice to another customer'
 | $0.40 bank fee short / $50 short | match + write-off / exception | same | ✓ |
 | One transfer for two invoices, no references | human review | `LOW_CONFIDENCE` | ✓ |
 | Exact references, card and bank (×6) | match (exact) | match (exact) | ✓ |
-| Two open invoices of the same amount, no reference | human review | matched by date fit | ✗ |
+| Two open invoices of the same amount, no reference | human review | matched by date fit (since fixed, see below) | ✗ |
 | Cites a *different* open invoice of the same customer | human review | matched by amount and name (since fixed, see below) | ✗ |
 | Abbreviated payer name (`PACIFIC CREST PROV`), no reference | match (fuzzy) | `UNAPPLIED_CASH` | ✗ |
 
 **What the misses mean:** no cash was applied to the wrong invoice (0 wrong automatic matches). Two cases were applied automatically where a clerk would have looked first. Both went to the right invoice, but one ignored a conflicting reference, which is a real risk. One case was missed, and it went to review instead of being booked.
 
-**What changed because of it:** the conflicting-reference case is now a rule (`REFERENCE_CONFLICT`: the amount fits one invoice but the memo names another open invoice of the same customer, so it goes to review), with a failing test written first. Re-scoring the same holdout gives 18/20, but the holdout found that rule, so it can't measure it independently. 17/20 stays the reported result until a fresh holdout exists.
+**What changed because of it:** two misses became rules, each with a failing test written first. `REFERENCE_CONFLICT`: the amount fits one invoice but the memo names another open invoice of the same customer, so it goes to review. Ties: when amount and text can't tell two open invoices apart, the date only ranks the suggestions and the case goes to review. Customers do pay before the invoice date, so the date can't decide. Both rules cost some automation (79% → 76% on the full run), which is the right trade for cash application. Re-scoring the same holdout gives 19/20, but the holdout found these rules, so it can't measure them independently. 17/20 stays the reported result until a fresh holdout exists.
 
 ## Design decisions
 
