@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: int_bank__classified
+    columns:
+      - name: bank_transaction_id
+        data_tests: [unique, not_null]
+      - name: cash_class
+        data_tests:
+          - accepted_values:
+              arguments: {values: ["stripe_payout", "customer_receipt", "other"]}
+  - name: int_stripe__payout_components
+    columns:
+      - name: payout_id
+        data_tests: [unique, not_null]

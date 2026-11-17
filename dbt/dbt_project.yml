@@ -1,0 +1,29 @@
+name: recon
+version: "1.0.0"
+config-version: 2
+profile: recon
+
+model-paths: ["models"]
+test-paths: ["tests"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+seed-paths: ["seeds"]
+
+vars:
+  operating_account_mask: "1000"   # Northwind's checking account in the Plaid Sandbox Item
+  close_period_start: "2026-11-01"
+  close_period_end: "2026-11-30"
+
+models:
+  recon:
+    staging:
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: view
+      +schema: intermediate
+
+seeds:
+  recon:
+    +schema: config

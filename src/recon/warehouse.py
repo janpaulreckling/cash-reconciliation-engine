@@ -116,8 +116,17 @@ RAW_TABLES: dict[str, list[Column]] = {
         ("original_description", "VARCHAR"),
         ("payment_channel", "VARCHAR"),
         ("category", "VARCHAR"),
+        ("category_detailed", "VARCHAR"),
         ("pending", "BOOLEAN"),
         ("removed", "BOOLEAN NOT NULL"),  # Plaid sync reported it as removed
+    ],
+    "bank_accounts": [
+        ("id", "VARCHAR NOT NULL"),  # Plaid account_id
+        ("name", "VARCHAR"),
+        ("mask", "VARCHAR"),
+        ("type", "VARCHAR"),
+        ("subtype", "VARCHAR"),
+        ("iso_currency_code", "VARCHAR"),
     ],
     "stripe_payouts": [
         ("id", "VARCHAR NOT NULL"),
@@ -197,6 +206,13 @@ class Warehouse:
                 " _row_hash VARCHAR NOT NULL, _loaded_at TIMESTAMPTZ NOT NULL,"
                 " _source_run_id VARCHAR NOT NULL)"
             )
+            # Additive schema evolution: new source columns are added as nullable.
+            # Older versions keep NULL there; the next pull stores a new version.
+            for name, type_ in cols:
+                self.con.execute(
+                    f"ALTER TABLE raw.{table} ADD COLUMN IF NOT EXISTS {name}"
+                    f" {type_.replace(' NOT NULL', '')}"
+                )
 
     def close(self) -> None:
         self.con.close()

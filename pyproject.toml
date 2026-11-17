@@ -16,6 +16,9 @@ dependencies = [
 ]
 
 [dependency-groups]
+dbt = [
+    "dbt-duckdb>=1.11.1",
+]
 dev = [
     "pytest>=8.2",
     "pytest-cov>=5.0",

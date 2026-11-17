@@ -1,0 +1,61 @@
+version: 2
+
+models:
+  - name: stg_erp__invoices
+    description: Current posted customer invoices and credit notes (latest version first, then posted filter).
+    columns:
+      - name: invoice_id
+        data_tests: [unique, not_null]
+      - name: invoice_number
+        data_tests: [unique, not_null]
+      - name: currency
+        data_tests:
+          - accepted_values:
+              arguments: {values: ["USD"]}
+      - name: amount_residual_cents
+        data_tests: [not_null]
+
+  - name: stg_stripe__charges
+    columns:
+      - name: charge_id
+        data_tests: [unique, not_null]
+      - name: currency
+        data_tests:
+          - accepted_values:
+              arguments: {values: ["USD"]}
+
+  - name: stg_stripe__balance_transactions
+    columns:
+      - name: balance_transaction_id
+        data_tests: [unique, not_null]
+
+  - name: stg_stripe__payouts
+    columns:
+      - name: payout_id
+        data_tests: [unique, not_null]
+
+  - name: stg_bank__transactions
+    description: Operating checking account only; money in is positive.
+    columns:
+      - name: bank_transaction_id
+        data_tests: [unique, not_null]
+      - name: currency
+        data_tests:
+          - accepted_values:
+              arguments: {values: ["USD"]}
+
+unit_tests:
+  - name: cancelled_invoice_does_not_come_back_as_posted
+    description: >
+      A posted invoice that was later cancelled must disappear. Filtering to "latest
+      posted version" instead of "latest version, then posted" would bring it back.
+    model: stg_erp__invoices
+    given:
+      - input: source('raw', 'erp_invoices')
+        rows:
+          - {id: 1, name: "INV/2026/00001", move_type: out_invoice, state: posted, currency: USD, amount_total: 100.00, amount_residual: 100.00, write_date: "2026-11-01 10:00:00+00", _loaded_at: "2026-11-01 10:05:00+00"}
+          - {id: 1, name: "INV/2026/00001", move_type: out_invoice, state: cancel, currency: USD, amount_total: 100.00, amount_residual: 0.00, write_date: "2026-11-02 10:00:00+00", _loaded_at: "2026-11-02 10:05:00+00"}
+          - {id: 2, name: "INV/2026/00002", move_type: out_invoice, state: posted, currency: USD, amount_total: 50.10, amount_residual: 50.10, write_date: "2026-11-01 10:00:00+00", _loaded_at: "2026-11-01 10:05:00+00"}
+    expect:
+      rows:
+        - {invoice_id: 2, amount_total_cents: 5010}

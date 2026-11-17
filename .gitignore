@@ -15,3 +15,7 @@ dist/
 .secrets/
 seeds/stripe_ledger.json
 seeds/plaid_ledger.json
+dbt/target/
+dbt/logs/
+dbt/dbt_packages/
+dbt/.user.yml

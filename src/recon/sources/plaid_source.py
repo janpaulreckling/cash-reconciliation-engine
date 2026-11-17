@@ -83,15 +83,27 @@ def normalize_transaction(t: dict[str, Any], removed: bool = False) -> dict[str,
         "original_description": t.get("original_description"),
         "payment_channel": t.get("payment_channel"),
         "category": pfc.get("primary"),
+        "category_detailed": pfc.get("detailed"),
         "pending": t.get("pending"),
         "removed": removed,
     }
+
+
+def normalize_account(a: dict[str, Any]) -> dict[str, Any]:
+    balances = a.get("balances") or {}
+    return {"id": a["account_id"], "name": a.get("name"), "mask": a.get("mask"),
+            "type": a.get("type"), "subtype": a.get("subtype"),
+            "iso_currency_code": balances.get("iso_currency_code")}
 
 
 class PlaidSource:
     def __init__(self, api: PlaidAPI, access_token: str) -> None:
         self._api = api
         self._token = access_token
+
+    def accounts(self) -> list[dict[str, Any]]:
+        page = self._api.post("/accounts/get", {"access_token": self._token})
+        return [normalize_account(a) for a in page["accounts"]]
 
     def fetch(self, cursor: str | None) -> tuple[list[dict[str, Any]], list[str], str]:
         """All changes since `cursor`: (added/modified rows, removed ids, next_cursor)."""

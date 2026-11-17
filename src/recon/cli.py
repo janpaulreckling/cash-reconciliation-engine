@@ -87,13 +87,16 @@ def extract_bank() -> None:
                              settings.plaid_access_token.get_secret_value())
         rows, removed, next_cursor = source.fetch(wh.state("plaid", "cursor"))
         rows += wh.tombstones("bank_transactions", removed)
-        result = wh.load("plaid", {"bank_transactions": rows}, state={"cursor": next_cursor})
+        result = wh.load("plaid", {"bank_accounts": source.accounts(), "bank_transactions": rows},
+                         state={"cursor": next_cursor})
     except ReconError as exc:
         console.print(f"[red]Extract failed:[/red] {exc}")
         raise typer.Exit(1) from exc
     finally:
         wh.close()
-    console.print(f"bank_transactions: {result.total} new versions ({len(removed)} removed)")
+    n = result.rows_loaded
+    console.print(f"bank_transactions: {n['bank_transactions']} new versions"
+                  f" ({len(removed)} removed); bank_accounts: {n['bank_accounts']}")
 
 
 @app.command()

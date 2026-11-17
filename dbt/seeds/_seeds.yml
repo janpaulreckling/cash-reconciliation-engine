@@ -1,0 +1,15 @@
+version: 2
+
+seeds:
+  - name: bank_rules
+    description: >
+      Maintained bank rules: regex on the bank description -> cash class. First match
+      by rule_id wins. Edit this file (reviewed like code) instead of hard-coding
+      exceptions in SQL.
+    columns:
+      - name: rule_id
+        data_tests: [unique, not_null]
+      - name: cash_class
+        data_tests:
+          - accepted_values:
+              arguments: {values: ["stripe_payout", "customer_receipt", "other"]}

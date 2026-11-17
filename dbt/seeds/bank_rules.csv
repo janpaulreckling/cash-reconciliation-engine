@@ -1,0 +1,4 @@
+rule_id,pattern,cash_class,reason
+R01,(?i)\bpayroll\b,other,"Payroll-related, not customer cash"
+R02,(?i)^interest payment,other,Bank interest
+R03,(?i)^(STRIPE (TRANSFER|PAYOUT))\b,stripe_payout,Stripe payout to the operating account
