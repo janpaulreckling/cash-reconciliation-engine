@@ -28,6 +28,13 @@ from recon.app.ui import (
 st.set_page_config(page_title="Cash Reconciliation · Northwind", page_icon="◧", layout="wide")
 st.html(css())
 
+@st.cache_resource(show_spinner="Building the demo warehouse from the committed snapshot…")
+def _bootstrap() -> bool:
+    data.ensure_demo_db()
+    return True
+
+
+_bootstrap()
 status = data.close_status()
 if not status:
     st.markdown('<div class="empty">No matching run yet. Run <code>make pipeline</code> '
@@ -42,8 +49,10 @@ period = status["period_start"].strftime("%B %Y")
 st.html(f"""
 <div class="eyebrow">Northwind Outfitters · Cash reconciliation</div>
 <div class="title">{period} close</div>
-<div class="subtitle">Stripe, bank and ERP matched {status['matched_at']:%b %-d, %H:%M} ·
-{status['cash_items']} cash items against {status['open_invoices']} open invoices</div>
+<div class="lede">At month-end, this checks that every customer payment in Stripe and the
+bank belongs to an invoice, and shows Accounting only the ones that don't add up.</div>
+<div class="subtitle">Matched {status['matched_at']:%b %-d, %H:%M} ·
+{status['cash_items']} payments against {status['open_invoices']} open invoices</div>
 """)
 
 rate = float(status["auto_match_rate"] or 0)

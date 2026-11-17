@@ -99,9 +99,7 @@ def extract_bank() -> None:
                   f" ({len(removed)} removed); bank_accounts: {n['bank_accounts']}")
 
 
-@app.command()
-def match() -> None:
-    """Run the matching engine on the current dbt models and store the decisions."""
+def _run_matching(db_path: str) -> None:
     from collections import Counter
 
     from recon.matching.config import MatchConfig
@@ -110,7 +108,7 @@ def match() -> None:
     from recon.matching.store import load_cash, load_invoices, load_payouts, save, today
 
     cfg = MatchConfig.load()
-    wh = Warehouse(Settings().duckdb_path)
+    wh = Warehouse(db_path)
     try:
         decisions = Matcher(cfg, load_invoices(wh.con)).run(load_cash(wh.con))
         payouts, deposits = load_payouts(wh.con)
@@ -124,14 +122,36 @@ def match() -> None:
                   f"{dict(sorted(tiers.items()))}; exceptions {dict(exceptions)}")
 
 
+def _run_dbt(db_path: str) -> None:
+    import os
+
+    from dbt.cli.main import dbtRunner
+
+    os.environ["RECON_DUCKDB_PATH"] = db_path
+    result = dbtRunner().invoke(["build", "--project-dir", "dbt", "--profiles-dir", "dbt",
+                                 "--quiet"])
+    if not result.success:
+        console.print("[red]dbt build failed[/red]")
+        raise typer.Exit(1)
+
+
+@app.command()
+def match() -> None:
+    """Run the matching engine on the current dbt models and store the decisions."""
+    _run_matching(Settings().duckdb_path)
+
+
 @app.command()
 def evaluate(
     show_all: bool = typer.Option(False, "--all", help="List every invoice, not only misses."),
+    min_precision: float = typer.Option(0.0, help="Exit 1 below this precision (CI gate)."),
+    min_recall: float = typer.Option(0.0, help="Exit 1 below this recall (CI gate)."),
+    db: str | None = typer.Option(None, help="DuckDB file (default: RECON_DUCKDB_PATH)."),
 ) -> None:
     """Compare the latest matching run with the seed's ground truth."""
     from recon.evaluate import metrics, outcomes
 
-    wh = Warehouse(Settings().duckdb_path)
+    wh = Warehouse(db or Settings().duckdb_path)
     try:
         results = outcomes(wh.con, Path("seeds/expected_matches.csv"))
     finally:
@@ -147,6 +167,10 @@ def evaluate(
     console.print(f"{m['correct']}/{m['invoices']} invoices correct · precision "
                   f"{m['precision']:.0%} · recall {m['recall']:.0%} · exception accuracy "
                   f"{m['exception_accuracy']:.0%}")
+    if m["precision"] < min_precision or m["recall"] < min_recall:
+        console.print(f"[red]Below gate: precision >= {min_precision:.0%}, "
+                      f"recall >= {min_recall:.0%} required[/red]")
+        raise typer.Exit(1)
 
 
 @app.command()
@@ -243,3 +267,42 @@ def seed_plaid(
     except ReconError as exc:
         console.print(f"[red]Seed failed:[/red] {exc}")
         raise typer.Exit(1) from exc
+
+
+snapshot_app = typer.Typer(help="Committed raw-layer snapshot (runs without sandbox keys).",
+                           no_args_is_help=True)
+app.add_typer(snapshot_app, name="snapshot")
+
+
+@snapshot_app.command("export")
+def snapshot_export() -> None:
+    """Write all raw tables to seeds/snapshot/*.csv."""
+    from recon.snapshot import export
+
+    wh = Warehouse(Settings().duckdb_path)
+    try:
+        console.print(export(wh))
+    finally:
+        wh.close()
+
+
+@app.command()
+def demo(db: str = typer.Option("demo.duckdb", help="New DuckDB file to build.")) -> None:
+    """Rebuild everything from the snapshot: load -> dbt -> match. No keys needed."""
+    from recon.snapshot import load
+
+    if Path(db).exists():
+        Path(db).unlink()
+    wh = Warehouse(db)
+    try:
+        console.print(load(wh))
+    finally:
+        wh.close()
+    _run_dbt(db)
+    _run_matching(db)
+    _run_dbt(db)  # marts read the decisions the match just wrote
+    console.print(f"Demo warehouse ready: {db}  (open it with RECON_DUCKDB_PATH={db} make app)")
+
+
+if __name__ == "__main__":
+    app()

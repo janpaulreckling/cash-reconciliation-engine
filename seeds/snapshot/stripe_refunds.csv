@@ -1,0 +1,3 @@
+id,charge,payment_intent,amount,currency,created,status,reason,balance_transaction,_row_hash,_loaded_at,_source_run_id
+re_3UcgOSE31RpOvsZx09apQVh8,ch_3UcgOSE31RpOvsZx0lYzNOWQ,pi_3UcgOSE31RpOvsZx06gVIxQp,712908,USD,2026-11-17 07:01:29+00,succeeded,requested_by_customer,txn_3UcgOSE31RpOvsZx074yN60G,8ceab115c4e0ea327ad2c69dc892cda7da4420ea5ce2841a104db8ab1d1e24a9,2026-11-17 07:02:16.569041+00,2a9e52f48e4844de8facaaa451263dbd
+re_3UcgOVE31RpOvsZx1q7Y7hjj,ch_3UcgOVE31RpOvsZx1FBoARrs,pi_3UcgOVE31RpOvsZx1bT0FpLg,35318,USD,2026-11-17 07:01:32+00,succeeded,requested_by_customer,txn_3UcgOVE31RpOvsZx1tQv88E1,b9f3072ef3aa3adcf67f67e44fbba26d54621a1f3debd0686fd7284c0d8871e5,2026-11-17 07:02:16.569041+00,2a9e52f48e4844de8facaaa451263dbd

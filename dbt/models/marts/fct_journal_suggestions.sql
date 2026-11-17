@@ -58,19 +58,24 @@ lines as (
            'Dispute ' || source_id
     from bt where type = 'adjustment' and net_cents < 0
 
-    -- Bank receipts applied to invoices (small bank fees written off)
+    -- Bank receipts linked to invoices: cash in, invoice(s) relieved, a small bank fee
+    -- written off, any excess (overpayment) parked in Unapplied Cash.
     union all
     select 'BNK-' || source_id, any_value(cash_date), '1010', any_value(amount_cents), 0,
            'Customer receipt ' || source_id
-    from decisions where source = 'bank_receipt' and exception_code is null and tier is not null
-    group by source_id
+    from decisions where source = 'bank_receipt' and tier is not null group by source_id
     union all
     select 'BNK-' || source_id, cash_date, '6160', writeoff_cents, 0, 'Bank fee short-paid'
     from decisions where source = 'bank_receipt' and coalesce(writeoff_cents, 0) > 0
     union all
     select 'BNK-' || source_id, cash_date, '1200', 0, applied_cents + coalesce(writeoff_cents, 0),
            'Applied to ' || invoice_number
-    from decisions where source = 'bank_receipt' and exception_code is null and tier is not null
+    from decisions where source = 'bank_receipt' and tier is not null
+    union all
+    select 'BNK-' || source_id, any_value(cash_date), '2050', 0,
+           any_value(amount_cents) - sum(applied_cents), 'Excess over invoice, see exception queue'
+    from decisions where source = 'bank_receipt' and tier is not null group by source_id
+    having any_value(amount_cents) - sum(applied_cents) > 0
 
     -- Bank receipts nobody could place: book the cash, park it
     union all

@@ -17,9 +17,34 @@ def db_path() -> str:
     return os.environ.get("RECON_DUCKDB_PATH", "recon.duckdb")
 
 
+def ensure_demo_db() -> None:
+    """Public demo (Streamlit Community Cloud): no sandbox keys there, so the first visit
+    builds the warehouse from the committed snapshot (`recon demo`: load -> dbt -> match).
+
+    The build runs in a child process under a temporary name: when that process exits,
+    every DuckDB connection (dbt's included) is closed and checkpointed, so renaming the
+    finished file can't lose writes still sitting in the WAL, and visitors never see a
+    half-built warehouse. The app calls this once per process (st.cache_resource)."""
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    target = Path(db_path())
+    if target.exists():
+        return
+    building = target.with_name(target.name + ".building")
+    for leftover in (building, building.with_name(building.name + ".wal")):
+        leftover.unlink(missing_ok=True)
+    subprocess.run([sys.executable, "-m", "recon.cli", "demo", "--db", str(building)],
+                   check=True, env={**os.environ, "RECON_DUCKDB_PATH": str(building)})
+    building.rename(target)
+
+
 def _query(sql: str, params: list[Any] | None = None) -> list[dict[str, Any]]:
-    # Short-lived read-only connections, so the CLI can run while the app is open.
-    con = duckdb.connect(db_path(), read_only=True)
+    # Short-lived connections, so the CLI can run while the app is open. Not read_only:
+    # DuckDB requires one configuration per file within a process, and the demo
+    # bootstrap's dbt run holds a read-write connection in this process.
+    con = duckdb.connect(db_path())
     try:
         cur = con.execute(sql, params or [])
         cols = [d[0] for d in cur.description]

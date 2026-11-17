@@ -1,0 +1,2 @@
+id,charge,payment_intent,amount,currency,created,status,reason,_row_hash,_loaded_at,_source_run_id
+du_1UcgOZE31RpOvsZxW8h1Mylh,ch_3UcgOYE31RpOvsZx0w8z2Fbr,pi_3UcgOYE31RpOvsZx0yZNtNLT,335070,USD,2026-11-17 07:01:35+00,needs_response,fraudulent,2f0b1c4e2f7f0e0e696fd4c577e7251671df4e66dc3f32b9367fe1089692dde4,2026-11-17 07:02:16.569041+00,2a9e52f48e4844de8facaaa451263dbd

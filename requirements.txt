@@ -1,0 +1,5 @@
+# For Streamlit Community Cloud (entry point: src/recon/app/streamlit_app.py).
+# Local development uses uv and pyproject.toml.
+.
+streamlit>=1.46
+dbt-duckdb>=1.9

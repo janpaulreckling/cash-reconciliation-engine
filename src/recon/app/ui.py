@@ -101,7 +101,8 @@ h1, h2, h3 {{ letter-spacing: -0.01em; }}
 .eyebrow {{ color: var(--text-3); font-size: .78rem; letter-spacing: .06em;
             text-transform: uppercase; font-weight: 600; }}
 .title {{ font-size: 1.65rem; font-weight: 650; margin: .1rem 0 .2rem; }}
-.subtitle {{ color: var(--text-2); font-size: .92rem; }}
+.lede {{ font-size: 1.02rem; max-width: 760px; margin: .15rem 0 .35rem; line-height: 1.45; }}
+.subtitle {{ color: var(--text-2); font-size: .86rem; }}
 .tiles {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
           gap: 12px; margin: 1.1rem 0 1.4rem; }}
 .tile {{ background: var(--raised); border: 1px solid var(--border); border-radius: 12px;

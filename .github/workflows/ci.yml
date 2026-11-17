@@ -20,7 +20,8 @@ jobs:
       - run: uv run ruff check .
       - run: uv run mypy src
       - run: uv run pytest
-      # dbt on an empty warehouse: compiles every model, runs the unit tests and all
-      # data tests (no sandbox access or secrets in CI).
-      - run: uv run python -c "from recon.warehouse import Warehouse; Warehouse('recon.duckdb').close()"
-      - run: make dbt
+      # End to end on the committed snapshot of a real seeded run (no sandbox keys):
+      # load -> dbt build (models + reconciliation tests) -> match -> dbt again,
+      # then fail the build if matching quality drops.
+      - run: uv run recon demo --db ci.duckdb
+      - run: uv run recon evaluate --db ci.duckdb --min-precision 1.0 --min-recall 0.95

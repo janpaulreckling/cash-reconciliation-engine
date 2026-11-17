@@ -163,3 +163,15 @@ def test_payout_sum_break_and_missing_deposit() -> None:
 def test_stripe_deposit_without_payout_is_flagged() -> None:
     [d] = match_payouts([], [Deposit("d1", D, 5_000, "STRIPE TRANSFER")], 3, D)
     assert d.exception == "DEPOSIT_WITHOUT_PAYOUT"
+
+
+def test_card_overpayment_on_a_cited_invoice_is_flagged_not_absorbed() -> None:
+    m = Matcher(CFG, [inv(200, 10_000)])
+    [d] = m.run([card("ch", 12_000, "INV/2026/00200")])
+    assert (d.tier, d.exception, d.applied_cents) == (1, "OVERPAYMENT", [10_000])
+    assert m.remaining["INV/2026/00200"] == 0
+
+
+def test_bank_overpayment_within_tolerance_is_still_flagged() -> None:
+    [d] = Matcher(CFG, [inv(201, 10_000)]).run([bank("b", 10_050, "INV/2026/00201")])
+    assert d.exception == "OVERPAYMENT" and d.applied_cents == [10_000]

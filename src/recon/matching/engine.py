@@ -194,8 +194,12 @@ class Matcher:
                 d.exception = flag
                 break
         applied = min(cash.net_cents, open_cents)
-        if d.exception is None and cash.amount_cents < inv.residual_cents:
-            gap = inv.residual_cents - cash.amount_cents
+        if d.exception is None and cash.amount_cents > open_cents:
+            # Apply what is open; the excess is customer money we owe or must place.
+            # It must never vanish into clearing silently.
+            d.exception = "OVERPAYMENT"
+        elif d.exception is None and cash.amount_cents < open_cents:
+            gap = open_cents - cash.amount_cents
             if cash.source == "bank_receipt" and gap <= self.cfg.tolerance_transfer:
                 d.writeoff_cents = gap          # small bank fee: apply and write off
                 applied = open_cents - gap
