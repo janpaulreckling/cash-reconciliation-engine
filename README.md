@@ -61,7 +61,7 @@ RECON_DUCKDB_PATH=demo.duckdb make app             # open the review app
 
 ## Close dashboard (Tableau)
 
-![Tableau close dashboard: close status, match rate by tier, where the cash went, exception queue and aging](docs/img/close-dashboard.png)
+![Tableau close dashboard: close status, where November's cash went by matching step, aging of unmatched cash and the exception queue](docs/img/close-dashboard.png)
 
 The same close on one page for the controller: can the month be signed off, where the cash went, which exceptions hold it up and how long unmatched cash has been waiting. Clicking a bar filters the page, the measure switch flips the bottom charts between dollars and payment count, and the open-items drawer links each payment to its case in the review app.
 
