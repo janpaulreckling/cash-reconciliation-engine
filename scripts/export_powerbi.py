@@ -29,9 +29,9 @@ ITEMS_SQL = """
     select source, source_id, max(cash_date) as cash_date,
            max(amount_cents) as amount_cents,
            string_agg(distinct partner_name, ' / ' order by partner_name) as customer,
-           case when min(tier) is null then 'exception'
-                when count(exception_code) > 0 then 'matched_needs_review'
-                else 'auto_matched' end as status,
+           ['auto_matched', 'matched_needs_review', 'exception'][max(
+               case status when 'exception' then 3 when 'matched_needs_review' then 2
+                           else 1 end)] as status,
            min(tier) as tier,
            min(exception_code) as exception_code
     from marts.fct_cash_decisions
