@@ -24,10 +24,16 @@ STATUS_LABEL = {"auto_matched": "Auto-matched", "matched_needs_review": "Matched
 BUCKETS = ((3, "0-3 days"), (7, "4-7 days"), (14, "8-14 days"))  # else "15+ days"
 
 ITEMS_SQL = """
-    select source, source_id, any_value(cash_date) as cash_date,
-           any_value(amount_cents) as amount_cents, any_value(partner_name) as customer,
-           any_value(status) as status, min(tier) as tier,
-           any_value(exception_code) as exception_code
+    -- A payment can have several decision rows (one per invoice it pays). Aggregate
+    -- explicitly so the result never depends on row order: the worst status wins.
+    select source, source_id, max(cash_date) as cash_date,
+           max(amount_cents) as amount_cents,
+           string_agg(distinct partner_name, ' / ' order by partner_name) as customer,
+           case when min(tier) is null then 'exception'
+                when count(exception_code) > 0 then 'matched_needs_review'
+                else 'auto_matched' end as status,
+           min(tier) as tier,
+           min(exception_code) as exception_code
     from marts.fct_cash_decisions
     where source <> 'stripe_payout'
     group by source, source_id
