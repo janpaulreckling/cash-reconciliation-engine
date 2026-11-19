@@ -1,7 +1,7 @@
-"""Export the close dashboard's data for Power BI as two flat CSV files.
+"""Export the close dashboard's data for the BI dashboard (Tableau Public) as two flat CSV files.
 
     uv run recon demo                       # builds demo.duckdb from the committed snapshot
-    uv run python scripts/export_powerbi.py # writes powerbi/*.csv
+    uv run python scripts/export_bi.py # writes bi/*.csv
 
 cash_items.csv has one row per customer payment (Stripe payouts are excluded because they
 are internal transfers, the same scope as the 58 payments in the README). close_status.csv
@@ -79,7 +79,7 @@ def export(db: Path, out_dir: Path) -> int:
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--db", type=Path, default=Path("demo.duckdb"))
-    p.add_argument("--out", type=Path, default=Path("powerbi"))
+    p.add_argument("--out", type=Path, default=Path("bi"))
     a = p.parse_args()
     n = export(a.db, a.out)
     print(f"{n} payments -> {a.out}/cash_items.csv, close summary -> {a.out}/close_status.csv")
