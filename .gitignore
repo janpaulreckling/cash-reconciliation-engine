@@ -23,3 +23,7 @@ seeds/plaid_ledger*.json
 demo.duckdb
 *.duckdb.building
 *.duckdb.snapshot
+
+# Tableau autosave and lock files
+*.twbr
+.~*
