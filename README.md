@@ -59,6 +59,19 @@ uv run recon demo                                  # snapshot -> dbt -> matching
 RECON_DUCKDB_PATH=demo.duckdb make app             # open the review app
 ```
 
+## Close dashboard (Tableau)
+
+![Tableau close dashboard: close status, match rate by tier, where the cash went, exception queue and aging](docs/img/close-dashboard.png)
+
+The same close on one page for the controller: can the month be signed off, where the cash went, which exceptions hold it up and how long unmatched cash has been waiting. Clicking a bar filters the page, the measure switch flips the bottom charts between dollars and payment count, and the open-items drawer links each payment to its case in the review app.
+
+```bash
+uv run recon demo && uv run python scripts/export_bi.py   # writes bi/cash_items.csv and bi/close_status.csv
+open bi/close.twb                                         # Tableau Desktop or Tableau Public (free); reads the CSVs next to it
+```
+
+*The 85% auto-match target and the 7-day aging SLA are illustrative assumptions for Northwind, not values from the data.*
+
 ## How it works
 
 ```mermaid
@@ -168,7 +181,7 @@ Things the real APIs taught along the way: Stripe test mode can't backdate charg
 <details>
 <summary><b>Stack</b></summary>
 
-Python 3.12 · DuckDB · dbt Core (dbt-duckdb) · rapidfuzz · Streamlit · Stripe API · Plaid API · Odoo XML-RPC · uv · ruff · mypy (strict) · pytest · GitHub Actions
+Python 3.12 · DuckDB · dbt Core (dbt-duckdb) · rapidfuzz · Streamlit · Tableau · Stripe API · Plaid API · Odoo XML-RPC · uv · ruff · mypy (strict) · pytest · GitHub Actions
 </details>
 
 ## Project layout
@@ -183,6 +196,7 @@ src/recon/
 dbt/              staging, intermediate, marts, reconciliation tests
 config/           matching thresholds
 seeds/            scenario plans, ground truth, snapshot of the real run
+bi/               Tableau close dashboard and its CSV export (scripts/export_bi.py)
 docs/             data model and design notes
 ```
 
