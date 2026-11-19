@@ -50,27 +50,24 @@
     <action caption='Filter from Cash flow by step' name='[Action1]'>
       <activation auto-clear='true' type='on-select' />
       <source dashboard='Close dashboard' type='sheet' worksheet='Cash flow by step' />
-      <command command='tsc:tsl-filter'>
+      <link caption='Filter from Cash flow by step' delimiter=',' escape='\' expression='tsl:Close%20dashboard?%5Bfederated.cash%5D.%5BCalc_step%5D~s0=&lt;[Calc_step]~na&gt;' include-null='true' multi-select='true' url-escape='true' /><command command='tsc:tsl-filter'>
         <param name='exclude' value='Cash flow by step' />
-        <param name='special-fields' value='all' />
         <param name='target' value='Close dashboard' />
       </command>
     </action>
     <action caption='Filter from Exception queue by reason' name='[Action2]'>
       <activation auto-clear='true' type='on-select' />
       <source dashboard='Close dashboard' type='sheet' worksheet='Exception queue by reason' />
-      <command command='tsc:tsl-filter'>
+      <link caption='Filter from Exception queue by reason' delimiter=',' escape='\' expression='tsl:Close%20dashboard?%5Bfederated.cash%5D.%5Bexception_reason%5D~s0=&lt;[exception_reason]~na&gt;' include-null='true' multi-select='true' url-escape='true' /><command command='tsc:tsl-filter'>
         <param name='exclude' value='Exception queue by reason' />
-        <param name='special-fields' value='all' />
         <param name='target' value='Close dashboard' />
       </command>
     </action>
     <action caption='Filter from Unmatched cash aging' name='[Action3]'>
       <activation auto-clear='true' type='on-select' />
       <source dashboard='Close dashboard' type='sheet' worksheet='Unmatched cash aging' />
-      <command command='tsc:tsl-filter'>
+      <link caption='Filter from Unmatched cash aging' delimiter=',' escape='\' expression='tsl:Close%20dashboard?%5Bfederated.cash%5D.%5Baging_bucket%5D~s0=&lt;[aging_bucket]~na&gt;' include-null='true' multi-select='true' url-escape='true' /><command command='tsc:tsl-filter'>
         <param name='exclude' value='Unmatched cash aging' />
-        <param name='special-fields' value='all' />
         <param name='target' value='Close dashboard' />
       </command>
     </action>
