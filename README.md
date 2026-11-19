@@ -61,6 +61,8 @@ RECON_DUCKDB_PATH=demo.duckdb make app             # open the review app
 
 ## Close dashboard (Tableau)
 
+**[Open the interactive dashboard on Tableau Public](https://public.tableau.com/app/profile/jan.paul.reckling/viz/northwind-close-public/Closedashboard)**: click a bar to filter, switch between dollars and payment count, open the list of open items.
+
 ![Tableau close dashboard: close status, where November's cash went by matching step, aging of unmatched cash and the exception queue](docs/img/close-dashboard.png)
 
 The same close on one page for the controller: can the month be signed off, where the cash went, which exceptions hold it up and how long unmatched cash has been waiting. Clicking a bar filters the page, the measure switch flips the bottom charts between dollars and payment count, and the open-items drawer links each payment to its case in the review app.
