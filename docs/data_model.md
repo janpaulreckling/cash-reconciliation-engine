@@ -71,7 +71,7 @@ marts/     fct_matches                   one row per link, with tier, score, rul
            rpt_close_status              per period: matched %, open exceptions, unexplained $
 ```
 
-**Close dashboard:** Power BI Service in the browser (app.powerbi.com, free account; Power BI Desktop doesn't run on macOS), fed by file exports of the marts (`recon export`).
+**Close dashboard:** a Tableau workbook (`bi/close.twb`) over CSV exports of the marts (`scripts/export_bi.py` writes `bi/cash_items.csv` and `bi/close_status.csv`), published to Tableau Public. Three views: payments by match tier and status, the exception queue by reason with the cash at stake, and the age of unmatched cash.
 
 The matching itself runs in Python (`src/recon/matching`), because fuzzy scoring and the 1:n search don't fit SQL well. It reads staging views from DuckDB and writes `recon.match_candidates` / `recon.match_decisions`, which dbt then picks up for the marts.
 
@@ -128,7 +128,7 @@ CI can't reach the sandboxes, so unit tests run against recorded API responses (
 
 **UI bar: high-end, not default Streamlit** (user request 2026-11-17). Built after matching works.
 - Streamlit review app with a custom theme (`.streamlit/config.toml` + CSS). Header shows close status: matched %, unexplained $, Stripe clearing balance. Left side: the exception queue with reason-code chips and amounts. Right side: the evidence side by side (invoice vs. charge vs. bank line), the confidence breakdown per signal, and Accept/Reject buttons that write to the audit trail.
-- Power BI close report with a designed theme JSON, not the defaults.
+- Tableau close dashboard with the review app's status colors (green auto-matched, amber needs review, red unmatched), legend and direct labels.
 
 - Live demo: the Streamlit review app on Streamlit Community Cloud, running on the committed `seeds/snapshot` (no secrets, no live APIs).
 - Demo GIF of the real UI in the README, plus a 2-minute Loom script for the user to record.
